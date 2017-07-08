@@ -5,6 +5,7 @@ import (
 	"golang.org/x/crypto/openpgp"
 	"log"
 	"os"
+	"flag"
 )
 
 const (
@@ -15,12 +16,22 @@ const (
 	SCORSH_ERR_SIGNATURE
 )
 
+type SCORSHconf struct {
+	spool string
+}
+
+
+
 type SCORSHmsg struct {
 	repo    string
 	branch  string
 	old_rev string
 	new_rev string
 }
+
+var conf_file = flag.String("c", "./scorsh.cfg", "Configuration file for SCORSH")
+
+
 
 func SCORSHErr(err int) error {
 
@@ -44,6 +55,7 @@ func SCORSHErr(err int) error {
 	return errors.New(err_str)
 
 }
+
 
 func SCORSHWorker(keyring string, c_msg chan SCORSHmsg, c_status chan int) {
 
@@ -78,4 +90,13 @@ func SCORSHWorker(keyring string, c_msg chan SCORSHmsg, c_status chan int) {
 
 	c_status <- ret
 
+}
+
+func main() {
+
+	flag.Parse()
+
+	
+	
+	
 }

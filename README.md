@@ -17,9 +17,9 @@ signed git commits.
 different_ on the git repo...
 
 ...and you want only authorised users to be able to trigger that
-_something__....
+_something_...
 
-..then **scorsh** might be what you have been looking for. 
+...then **scorsh** might be what you have been looking for. 
 
 **scorsh** is a simple system to execute commands on a remote host by
 using GPG-signed commits containing customisable commands
@@ -38,22 +38,18 @@ each new file there, walks through the new commits looking for signed
 ones, checks if the message of a signed commit contains a recognised
 scorsh-tag, verifies that the user who signed the message is allowed
 to use that scorsh-tag, and executes the commands associated to the
-scorsh-tag. Or, well, this is what `scorsh` will do when it's ready.
+scorsh-tag. Or, well, this is what `scorsh` should be able to do when
+it's finished ;-)
 
 The set of scorsh-tags accepted on a repo/branch is configurable, and
 each scorsh-tag can be associated to a list of commands. Commands are
 just URLs, at the moment restricted to two possible types:
 
-* file://path/to/file - in this case `scorsh` tries to execute the
+* `file://path/to/file` - in this case `scorsh` tries to execute the
   corresponding file (useful to execute scripts)
   
-* http://myserver.com/where/you/like - in this case `scorsh` makes an
+* `http://myserver.com/where/you/like` - in this case `scorsh` makes an
   HTTP request to the specified URL (useful to trigger other actions,
   e.g., Jenkins or Travis builds...)
   
-
-
-
-
-
 

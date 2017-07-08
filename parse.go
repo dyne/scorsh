@@ -42,6 +42,8 @@ func check_signature(commit *git.Commit, keyring *openpgp.KeyRing) (signature, s
 	return "", "", err
 }
 
+
+// traverse all the commits between two references, looking for 
 func walk_commits(msg SCORSHmsg, keyring openpgp.KeyRing) int {
 
 	fmt.Printf("Inside parse_commits\n")

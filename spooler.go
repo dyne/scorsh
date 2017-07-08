@@ -20,6 +20,7 @@ func parse_request(fname string) (SCORSHmsg, error) {
 	
 }
 
+
 func spooler(watcher *fsnotify.Watcher, worker chan SCORSHmsg) {
 
 	for {
@@ -35,10 +36,8 @@ func spooler(watcher *fsnotify.Watcher, worker chan SCORSHmsg) {
 		case err := <-watcher.Errors:
 			log.Println("error:", err)
 		}
+		
 	}
 }
 
 
-func main(){
-
-}
