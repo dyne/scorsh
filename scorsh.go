@@ -2,9 +2,7 @@ package main
 
 import (
 	"errors"
-	"golang.org/x/crypto/openpgp"
 	"log"
-	"os"
 	"flag"
 )
 
@@ -57,46 +55,13 @@ func SCORSHErr(err int) error {
 }
 
 
-func SCORSHWorker(keyring string, c_msg chan SCORSHmsg, c_status chan int) {
-
-	// read the worker configuration file
-
-	// Open the keyring file
-	f, err := os.Open(keyring)
-	defer f.Close()
-
-	if err != nil {
-		log.Printf("[worker] cannot open file %s\n", keyring)
-		c_status <- SCORSH_ERR_NO_FILE
-		return
-	}
-
-	// load the keyring
-	kr, err := openpgp.ReadArmoredKeyRing(f)
-
-	if err != nil {
-		log.Printf("[worker] cannot open keyring %s\n", keyring)
-		log.Printf("%s\n", err)
-		c_status <- SCORSH_ERR_KEYRING
-		return
-	}
-
-	// wait for messages from the  c_msg channel
-
-	msg := <-c_msg
-
-	// process message
-	ret := walk_commits(msg, kr)
-
-	c_status <- ret
-
-}
 
 func main() {
 
 	flag.Parse()
 
-	
-	
+	cfg := ReadConfig(*conf_file)
+
+	log.Printf("%s\n", cfg)
 	
 }
