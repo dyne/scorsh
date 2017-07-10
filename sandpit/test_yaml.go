@@ -34,11 +34,22 @@ s_msg:
    - s_tag: BUILD
      s_args: 
       -   suites/jessie 
-      -        suites/ascii
+      -   suites/ascii
    - s_tag: REMOVE
      s_args: 
       - file1
+   - s_tag: CUSTOM
+     s_args: [first, second, third]
 `
+
+var other_msg = `
+s_msg: [
+        {s_tag: "BUILD", s_args: [suites/jessie, suites/ascii]},
+        {s_tag: "REMOVE", s_args: [file1]},
+        {s_tag: "CUSTOM", s_args: [first, second, third]}
+       ]
+`
+
 
 var cfg_str = `
 s_cfg:
@@ -53,6 +64,11 @@ s_cfg:
   - s_tag: REMOVE
     s_commands:
      - s_cmd: file:///bin/rm 
+  - s_tag: CUSTOM
+    s_commands: [
+                 {s_cmd: "file:///home/user/script/sh", s_hash: "1234567890abcdef"}, 
+                 {s_cmd: "http://my.server.net/submit.php", s_hash: "0987654321abce"}
+                ]
 `
 
 func main() {
@@ -63,7 +79,7 @@ func main() {
 
 	//log.Printf("%s\n", test_str)
 
-	err := yaml.Unmarshal([]byte(msg_str), &c)
+	err := yaml.Unmarshal([]byte(other_msg), &c)
 	if err != nil {
 		log.Fatal("error: ", err)
 	}
