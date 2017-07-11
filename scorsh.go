@@ -14,11 +14,6 @@ const (
 	SCORSH_ERR_SIGNATURE
 )
 
-type SCORSHconf struct {
-	spool string
-}
-
-
 
 type SCORSHmsg struct {
 	repo    string
@@ -60,8 +55,12 @@ func main() {
 
 	flag.Parse()
 
-	cfg := ReadConfig(*conf_file)
+	cfg := ReadGlobalConfig(*conf_file)
 
+	msg, status := StartWorkers(cfg)
+
+	
+		
 	log.Printf("%s\n", cfg)
 	
 }

@@ -28,7 +28,7 @@ type SCORSHcfg struct {
 
 // Read a configuration from fname or die
 
-func ReadConfig(fname string) *SCORSHcfg {
+func ReadGlobalConfig(fname string) *SCORSHcfg {
 
 	data, err := ioutil.ReadFile(fname)
 	if err != nil {

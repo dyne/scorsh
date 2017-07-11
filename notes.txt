@@ -1,0 +1,54 @@
+## structure
+
+- we read the list of workers from the config file. Each worker
+  record consists of
+
+  - a list of repos/branches
+  - a folder where the configs and logs are kept
+  - a logfile
+  - a tagfile with the definition of tags
+  - a list of keyring files
+
+## master logic
+
+- in main() (master) we create a worker for each worker record,
+  maintaining a map of which worker can process commands for which
+  repo/branch
+
+- The spooler receives and processes CREATE events from the spool. It
+  parses each message and forwards it to the corresponding worker(s).
+
+- When the worker is done, it notifies the master, which will delete
+  the corresponding file from the spool.
+
+
+
+## worker logic
+
+- Each worker reads a configuration file containing the definition of
+  the tags it can manage.
+
+- Each tag is associated to a set of commands (URLs) and to a set of
+  keyrings.
+
+- A worker maintains a list of accepted scorsh tags, a map of
+  keyrings[tags], and a map of commands[tags].
+
+When a new scorsh message is received by a worker, it looks through
+the commit history for commits containing schorsh-tags. For each
+scorsh-tag found, the worker looks if the tag is among the supported
+ones, then checks if the commit can be verified by one of the keyrings
+associated to the tag. If the set of keyrings for that tag is empty,
+the tag is not allowed to run (this is a quick way to disable tags).
+
+(we might want to add an option to the definition of a scorsh-tag,
+which allows to run the commands from unsigned and/or unverified
+commits. This would be very dangerous though.)
+
+Then, if the tag is allowed to run, the worker executes each of the
+commands in the tag definition, replacing arguments as needed. If a
+command is a script (file://...), then it must also correspon to the
+hash specified in the config, otherwise it will not be executed.
+
+When the worker is finished with all the commands for all the commits,
+it will notify the master.
