@@ -2,29 +2,13 @@ package main
 
 import (
 	"errors"
-	"log"
 	"flag"
-)
-
-const (
-	SCORSH_ERR_NO_FILE = -(1 << iota)
-	SCORSH_ERR_KEYRING
-	SCORSH_ERR_NO_REPO
-	SCORSH_ERR_NO_COMMIT
-	SCORSH_ERR_SIGNATURE
+	"log"
 )
 
 
-type SCORSHmsg struct {
-	repo    string
-	branch  string
-	old_rev string
-	new_rev string
-}
 
 var conf_file = flag.String("c", "./scorsh.cfg", "Configuration file for SCORSH")
-
-
 
 func SCORSHErr(err int) error {
 
@@ -50,17 +34,55 @@ func SCORSHErr(err int) error {
 }
 
 
+func FindMatchingWorkers(master *SCORSHmaster, msg *SCORSHmsg) []*SCORSHworker {
+	
+	var ret []*SCORSHworker
+	
+	for _,w := range master.Workers {
+		if w.Matches(msg.repo, msg.branch) {
+			ret = append(ret, &w)
+		}
+	}
+	return ret
+}
+
+
+func Master(master *SCORSHmaster) {
+
+	// master main loop:
+
+	var matching_workers []*SCORSHworker
+	var push_msg SCORSHmsg
+	
+	matching_workers = make([]*SCORSHworker, len(master.Workers))
+
+	for {
+		select {
+		// - receive stuff from the spooler
+		case push_msg = <- master.Spooler:
+			// - lookup the repos map for matching workers
+			matching_workers = FindMatchingWorkers(master, &push_msg)
+			// - dispatch the message to all the matching workers
+			for _, w := range matching_workers {
+				w.Chan <- push_msg
+			}
+		}
+	}
+}
 
 func main() {
 
 	flag.Parse()
 
-	cfg := ReadGlobalConfig(*conf_file)
+	master := ReadGlobalConfig(*conf_file)
 
-	msg, status := StartWorkers(cfg)
-
-	
-		
-	log.Printf("%s\n", cfg)
-	
+	err_workers := StartWorkers(master)
+	if err_workers != nil {
+		log.Fatal("Error starting workers: ", err_workers)
+	}
+	err_spooler := StartSpooler(master)
+	if err_spooler != nil {
+		log.Fatal("Error starting spooler: ", err_spooler)
+	}
+	go Master(master)
 }

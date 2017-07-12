@@ -10,33 +10,18 @@ import (
 	"os"
 )
 
-type SCORSHWorker_cfg struct {
-	Name     string   `yaml:"w_name"`
-	Repos    []string `yaml:"w_repos"`
-	Folder   string   `yaml:"w_folder"`
-	Logfile  string   `yaml:"w_logfile"`
-	Tagfile  string   `yaml:"w_tagfile"`
-	Keyrings []string `yaml:"w_keyrings"`
-}
-
-type SCORSHcfg struct {
-	Spooldir  string             `yaml:"s_spooldir"`
-	Logfile   string             `yaml:"s_logfile"`
-	LogPrefix string             `yaml:"s_logprefix"`
-	Workers   []SCORSHWorker_cfg `yaml:"s_workers"`
-}
 
 // Read a configuration from fname or die
 
-func ReadGlobalConfig(fname string) *SCORSHcfg {
+func ReadGlobalConfig(fname string) *SCORSHmaster {
 
 	data, err := ioutil.ReadFile(fname)
 	if err != nil {
 		log.Fatal("Error while reading file: ", err)
 	}
 
-	var cfg *SCORSHcfg
-	cfg = new(SCORSHcfg)
+	var cfg *SCORSHmaster
+	cfg = new(SCORSHmaster)
 
 	// Unmarshal the YAML configuration file into a SCORSHcfg structure
 	err = yaml.Unmarshal(data, cfg)
@@ -73,7 +58,7 @@ func ReadGlobalConfig(fname string) *SCORSHcfg {
 
 }
 
-func (cfg *SCORSHcfg) String() string {
+func (cfg *SCORSHmaster_cfg) String() string {
 
 	var buff bytes.Buffer
 
