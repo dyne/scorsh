@@ -6,7 +6,7 @@ import (
 	"golang.org/x/crypto/openpgp"
 	"os"
 	"strings"
-	"log"
+//	"log"
 )
 
 func CommitToString(commit *git.Commit) string {
@@ -23,22 +23,25 @@ func CommitToString(commit *git.Commit) string {
 }
 
 // FIXME: RETURN THE ENTITY PROVIDED BY THE CHECK, OR nil
-func check_signature(commit *git.Commit, keyring *openpgp.KeyRing) (signature, signed string, err error) {
-
+func check_signature(commit *git.Commit, keys []*openpgp.KeyRing) (signature, signed string, err error) {
+	
 	signature, signed, err = commit.ExtractSignature()
+
 	if err == nil {
-
-		_, err_sig :=
-			openpgp.CheckArmoredDetachedSignature(*keyring, strings.NewReader(signed),
+		for _, keyring := range keys {
+			
+			_, err_sig :=
+				openpgp.CheckArmoredDetachedSignature(*keyring, strings.NewReader(signed),
 				strings.NewReader(signature))
-
-		if err_sig == nil {
-			fmt.Printf("Good signature \n")
-			return signature, signed, nil
+			
+			if err_sig == nil {
+				fmt.Printf("Good signature \n")
+				return signature, signed, nil
+			}
+			err = err_sig
 		}
-		err = err_sig
 	}
-
+	
 	return "", "", err
 }
 
@@ -46,7 +49,7 @@ func check_signature(commit *git.Commit, keyring *openpgp.KeyRing) (signature, s
 // traverse all the commits between two references, looking for scorsh
 // commands
 // fixme: we don't have just one keyring here....
-func walk_commits(msg SCORSHmsg, keyring openpgp.KeyRing) int {
+func walk_commits(msg SCORSHmsg, w *SCORSHworker) error {
 
 	fmt.Printf("Inside parse_commits\n")
 
@@ -58,7 +61,7 @@ func walk_commits(msg SCORSHmsg, keyring openpgp.KeyRing) int {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while opening repository %s (%s)\n",
 			reponame, err)
-		return SCORSH_ERR_NO_REPO
+		return SCORSHerr(SCORSH_ERR_NO_REPO)
 	}
 
 	old_rev_oid, err := git.NewOid(old_rev)
@@ -66,7 +69,7 @@ func walk_commits(msg SCORSHmsg, keyring openpgp.KeyRing) int {
 	oldrev_commit, err := repo.LookupCommit(old_rev_oid)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Commit: %s does not exist\n", old_rev)
-		return SCORSH_ERR_NO_COMMIT
+		return SCORSHerr(SCORSH_ERR_NO_COMMIT)
 	}
 
 	new_rev_oid, err := git.NewOid(new_rev)
@@ -74,7 +77,7 @@ func walk_commits(msg SCORSHmsg, keyring openpgp.KeyRing) int {
 	newrev_commit, err := repo.LookupCommit(new_rev_oid)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Commit: %s does not exist\n", new_rev)
-		return SCORSH_ERR_NO_COMMIT
+		return SCORSHerr(SCORSH_ERR_NO_COMMIT)
 	}
 
 	cur_commit := newrev_commit
@@ -85,17 +88,21 @@ func walk_commits(msg SCORSHmsg, keyring openpgp.KeyRing) int {
 		if err == nil {
 
 			fmt.Printf("%s", CommitToString(commit))
+			// We should look for scorsh-tags, and if the commit has any,
+			// check if it can be verified by any of the keyrings associated
+			// with the scorsh-tag
+			
 			//signature, signed, err := check_signature(commit, &keyring)
-			_, _, err := check_signature(commit, &keyring)
-			if err != nil {
-				log.Printf("%s\n", SCORSHErr(SCORSH_ERR_SIGNATURE))
-				
-			}
+			//_, _, err := check_signature(commit, w.keys)
+			//if err != nil {
+			//	log.Printf("%s\n", SCORSHerr(SCORSH_ERR_SIGNATURE))
+			//	
+			//}
 			cur_commit = commit.Parent(0)
 		} else {
 			fmt.Printf("Commit %x not found!\n", cur_commit.Id())
-			return SCORSH_ERR_NO_COMMIT
+			return SCORSHerr(SCORSH_ERR_NO_COMMIT)
 		}
 	}
-	return 0
+	return nil
 }

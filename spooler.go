@@ -14,7 +14,7 @@ func parse_request(fname string) (SCORSHmsg, error) {
 	_, err := os.Open(fname)
 	if err != nil {
 		log.Printf("Unable to open file: %s\n", fname)
-		return ret, SCORSHErr(SCORSH_ERR_NO_FILE)
+		return ret, SCORSHerr(SCORSH_ERR_NO_FILE)
 	}
 	
 	return ret, nil

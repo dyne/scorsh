@@ -1,8 +1,8 @@
 package main
 
 import (
-	"errors"
 	"flag"
+	"fmt"
 	"log"
 )
 
@@ -10,7 +10,7 @@ import (
 
 var conf_file = flag.String("c", "./scorsh.cfg", "Configuration file for SCORSH")
 
-func SCORSHErr(err int) error {
+func SCORSHerr(err int) error {
 
 	var err_str string
 
@@ -28,8 +28,7 @@ func SCORSHErr(err int) error {
 	default:
 		err_str = "Generic Error"
 	}
-
-	return errors.New(err_str)
+	return fmt.Errorf("%s", err_str)
 
 }
 
