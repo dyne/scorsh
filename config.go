@@ -20,9 +20,11 @@ func ReadGlobalConfig(fname string) *SCORSHmaster {
 		log.Fatal("Error while reading file: ", err)
 	}
 
+	
 	var cfg *SCORSHmaster
-	cfg = new(SCORSHmaster)
 
+	cfg = new(SCORSHmaster)
+	
 	// Unmarshal the YAML configuration file into a SCORSHcfg structure
 	err = yaml.Unmarshal(data, cfg)
 	if err != nil {
@@ -30,25 +32,27 @@ func ReadGlobalConfig(fname string) *SCORSHmaster {
 	}
 
 	fmt.Printf("%s", cfg)
-
+	
 	// If the user has not set a spooldir, crash loudly
 	if cfg.Spooldir == "" {
 		log.Fatal("No spooldir defined in ", fname, ". Exiting\n")
 	}
 
 	// Check if the user has set a custom logprefix
-	if cfg.LogPrefix != "" {
-		log.SetPrefix(cfg.LogPrefix)
-	}
 
 	// Check if the user wants to redirect the logs to a file
 	if cfg.Logfile != "" {
-		f, err := os.Open(cfg.Logfile)
+		log.Printf("Opening log file: %s\n", cfg.Logfile)
+		f, err := os.OpenFile(cfg.Logfile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0600)
 		if err != nil {
 			log.SetOutput(io.Writer(f))
 		} else {
-			log.Printf("Error opening logfile: \n", err)
+			log.Fatal("Error opening logfile: ", cfg.Logfile, err)
 		}
+	}
+
+	if cfg.LogPrefix != "" {
+		log.SetPrefix(cfg.LogPrefix)
 	}
 
 	// If we got so far, then there is some sort of config in cfg
@@ -58,7 +62,10 @@ func ReadGlobalConfig(fname string) *SCORSHmaster {
 
 }
 
-func (cfg *SCORSHmaster_cfg) String() string {
+
+
+
+func (cfg *SCORSHmaster) String() string {
 
 	var buff bytes.Buffer
 

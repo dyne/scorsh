@@ -16,6 +16,8 @@ func parse_request(fname string) (SCORSHmsg, error) {
 		log.Printf("Unable to open file: %s\n", fname)
 		return ret, SCORSHerr(SCORSH_ERR_NO_FILE)
 	}
+
+	// FIXME: Fill in the ret structure
 	
 	return ret, nil
 	

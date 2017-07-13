@@ -61,27 +61,48 @@ func Master(master *SCORSHmaster) {
 		case push_msg = <- master.Spooler:
 			// - lookup the repos map for matching workers
 			matching_workers = FindMatchingWorkers(master, &push_msg)
+			// add the message to PendingMsg
+			//...
 			// - dispatch the message to all the matching workers
 			for _, w := range matching_workers {
-				w.Chan <- push_msg
+				// increase the counter associated to the message 
+				w.MsgChan <- push_msg
 			}
 		}
 	}
 }
 
-func main() {
-
-	flag.Parse()
+func InitMaster() *SCORSHmaster {
 
 	master := ReadGlobalConfig(*conf_file)
-
+	
+	master.Repos = make(map[string][]*SCORSHworker)
+	master.WorkingMsg = make(map[string]int)
+	// This is the mutex-channel on which we receive acks from workers
+	master.StatusChan = make(chan SCORSHmsg, 1)
+	
 	err_workers := StartWorkers(master)
 	if err_workers != nil {
 		log.Fatal("Error starting workers: ", err_workers)
+	} else {
+		log.Println("Workers started correctly")
 	}
 	err_spooler := StartSpooler(master)
 	if err_spooler != nil {
 		log.Fatal("Error starting spooler: ", err_spooler)
+	} else {
+		log.Println("Spooler started correctly")
 	}
+	return master
+	
+}
+
+
+func main() {
+
+	flag.Parse()
+
+	master := InitMaster()
+	
 	go Master(master)
 }

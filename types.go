@@ -15,22 +15,22 @@ const (
 // the SCORSHmsg type represents messages received from the spool and
 // sent to workers
 type SCORSHmsg struct {
+	name    string
 	repo    string
 	branch  string
 	old_rev string
 	new_rev string
 }
 
-
 type SCORSHcmd struct {
-	URL  string
-	hash string
+	URL  string `yaml:"c_url"`
+	Hash string `yaml:"c_hash"`
 }
 
 type SCORSHtag struct {
-	TagName  string
-	Keyrings []string
-	Commands []SCORSHcmd
+	Name     string      `yaml:"t_name"`
+	Keyrings []string    `yaml:"t_keyrings"`
+	Commands []SCORSHcmd `yaml:"t_commands"`
 }
 
 // Configuration of a worker
@@ -45,16 +45,17 @@ type SCORSHworker_cfg struct {
 
 // State of a worker
 type SCORSHworker_state struct {
-	Tags map[string]SCORSHtag
-	Keys map[string]openpgp.KeyRing
-	Chan chan SCORSHmsg
+	Tags       []SCORSHtag `yaml:"w_tags"`
+	Keys       map[string]openpgp.KeyRing
+	MsgChan    chan SCORSHmsg
+	StatusChan chan SCORSHmsg
 }
 
 // The type SCORSHworker represents the configuration and state of a
 // worker
 type SCORSHworker struct {
-	SCORSHworker_cfg
-	SCORSHworker_state
+	SCORSHworker_cfg   `yaml:",inline"`
+	SCORSHworker_state `yaml:",inline"`
 }
 
 // Configuration of the master
@@ -67,13 +68,15 @@ type SCORSHmaster_cfg struct {
 
 // State of the master
 type SCORSHmaster_state struct {
-	Spooler chan SCORSHmsg
-	Repos   map[string][]*SCORSHworker
+	Spooler    chan SCORSHmsg
+	StatusChan chan SCORSHmsg
+	Repos      map[string][]*SCORSHworker
+	WorkingMsg map[string]int
 }
 
 // The type SCORSHmaster represents the configuration and state of the
 // master
 type SCORSHmaster struct {
-	SCORSHmaster_cfg
+	SCORSHmaster_cfg `yaml:",inline"`
 	SCORSHmaster_state
 }
