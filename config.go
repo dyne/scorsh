@@ -29,7 +29,7 @@ func ReadGlobalConfig(fname string) *SCORSHmaster {
 	}
 
 	fmt.Printf("%s", cfg)
-	
+
 	if cfg.Logfile != "" {
 		f, err := os.OpenFile(cfg.Logfile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0600)
 		if err != nil {
@@ -40,7 +40,7 @@ func ReadGlobalConfig(fname string) *SCORSHmaster {
 	}
 
 	if cfg.LogPrefix != "" {
-		log.SetPrefix(cfg.LogPrefix+ " ")
+		log.SetPrefix(cfg.LogPrefix + " ")
 	}
 
 	// If the user has not set a spooldir, crash loudly
@@ -59,4 +59,3 @@ func ReadGlobalConfig(fname string) *SCORSHmaster {
 	return cfg
 
 }
-

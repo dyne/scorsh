@@ -12,7 +12,7 @@ import (
 )
 
 func (worker *SCORSHworker) Matches(repo, branch string) bool {
-	
+
 	for _, r := range worker.Repos {
 		parts := strings.SplitN(r, ":", 2)
 		repo_pattern := parts[0]
@@ -58,20 +58,19 @@ func (w *SCORSHworker) LoadKeyrings() error {
 
 // Still to be implemented
 func (w *SCORSHworker) LoadTags() error {
-	
+
 	w_tags, err := ioutil.ReadFile(w.Tagfile)
-	if err != nil{
+	if err != nil {
 		return fmt.Errorf("Cannot read worker config: %s", err)
 	}
 
-	
 	err = yaml.Unmarshal(w_tags, w)
 	//err = yaml.Unmarshal(w_tags, tags)
 
 	if err != nil {
 		return fmt.Errorf("Error while reading tags: %s", err)
 	}
-	
+
 	return nil
 }
 
@@ -79,11 +78,11 @@ func (w *SCORSHworker) LoadTags() error {
 func Worker(w *SCORSHworker) {
 
 	var msg SCORSHmsg
-	
+
 	log.Printf("[worker: %s] Started\n", w.Name)
 
 	w.StatusChan <- msg
-	
+
 	// This is the main worker loop
 	for {
 		select {
@@ -104,14 +103,14 @@ func Worker(w *SCORSHworker) {
 func StartWorkers(master *SCORSHmaster) error {
 
 	num_workers := len(master.Workers)
-	
+
 	// We should now start each worker
 
 	log.Printf("num_workers: %d\n", num_workers)
-	
-	for w:=0; w<num_workers; w++ {
-		
-		worker := & (master.Workers[w])
+
+	for w := 0; w < num_workers; w++ {
+
+		worker := &(master.Workers[w])
 		// Set the Status and Msg channels
 		worker.StatusChan = master.StatusChan
 		worker.MsgChan = make(chan SCORSHmsg)
@@ -132,7 +131,7 @@ func StartWorkers(master *SCORSHmaster) error {
 			master.Repos[repo_name] = append(master.Repos[repo_name], worker)
 		}
 		go Worker(worker)
-		<- master.StatusChan
+		<-master.StatusChan
 	}
 	return nil
 }

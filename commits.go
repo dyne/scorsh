@@ -6,7 +6,7 @@ import (
 	"golang.org/x/crypto/openpgp"
 	"os"
 	"strings"
-//	"log"
+	//	"log"
 )
 
 func CommitToString(commit *git.Commit) string {
@@ -24,16 +24,16 @@ func CommitToString(commit *git.Commit) string {
 
 // FIXME: RETURN THE ENTITY PROVIDED BY THE CHECK, OR nil
 func check_signature(commit *git.Commit, keys []*openpgp.KeyRing) (signature, signed string, err error) {
-	
+
 	signature, signed, err = commit.ExtractSignature()
 
 	if err == nil {
 		for _, keyring := range keys {
-			
+
 			_, err_sig :=
 				openpgp.CheckArmoredDetachedSignature(*keyring, strings.NewReader(signed),
-				strings.NewReader(signature))
-			
+					strings.NewReader(signature))
+
 			if err_sig == nil {
 				fmt.Printf("Good signature \n")
 				return signature, signed, nil
@@ -41,10 +41,9 @@ func check_signature(commit *git.Commit, keys []*openpgp.KeyRing) (signature, si
 			err = err_sig
 		}
 	}
-	
+
 	return "", "", err
 }
-
 
 // traverse all the commits between two references, looking for scorsh
 // commands
@@ -91,12 +90,12 @@ func walk_commits(msg SCORSHmsg, w *SCORSHworker) error {
 			// We should look for scorsh-tags, and if the commit has any,
 			// check if it can be verified by any of the keyrings associated
 			// with the scorsh-tag
-			
+
 			//signature, signed, err := check_signature(commit, &keyring)
 			//_, _, err := check_signature(commit, w.keys)
 			//if err != nil {
 			//	log.Printf("%s\n", SCORSHerr(SCORSH_ERR_SIGNATURE))
-			//	
+			//
 			//}
 			cur_commit = commit.Parent(0)
 		} else {

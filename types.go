@@ -55,8 +55,8 @@ type SCORSHworker_state struct {
 // The type SCORSHworker represents the configuration and state of a
 // worker
 type SCORSHworker struct {
-	SCORSHworker_cfg   `yaml:",inline"`
-	SCORSHworker_state 
+	SCORSHworker_cfg `yaml:",inline"`
+	SCORSHworker_state
 }
 
 // Configuration of the master
@@ -81,8 +81,6 @@ type SCORSHmaster struct {
 	SCORSHmaster_cfg `yaml:",inline"`
 	SCORSHmaster_state
 }
-
-
 
 func (cfg *SCORSHmaster) String() string {
 
@@ -122,7 +120,6 @@ func (cfg *SCORSHmaster) String() string {
 	return buff.String()
 }
 
-
 func (msg *SCORSHmsg) String() string {
 
 	var buff bytes.Buffer
@@ -139,4 +136,3 @@ func (msg *SCORSHmsg) String() string {
 	return buff.String()
 
 }
-

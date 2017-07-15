@@ -6,15 +6,14 @@ import (
 	"github.com/go-yaml/yaml"
 	"io/ioutil"
 	"log"
-//	"time"
+	//	"time"
 )
 
 // parse a request file and return a SCORSHmessage
 func parse_request(fname string, msg *SCORSHmsg) error {
 
-	
 	debug.log("[parse_request] message at start: %s\n", msg)
-	
+
 	data, err := ioutil.ReadFile(fname)
 	if err != nil {
 		log.Printf("Unable to open file: %s\n", fname)
@@ -22,10 +21,9 @@ func parse_request(fname string, msg *SCORSHmsg) error {
 	}
 
 	debug.log("[parse_request] file contains: \n%s\n", data)
-	
+
 	debug.log("[parse_request] reading message from file: %s\n", fname)
-	
-	
+
 	err = yaml.Unmarshal([]byte(data), msg)
 	if err != nil {
 		return fmt.Errorf("Error parsing message: %s", err)
@@ -34,14 +32,13 @@ func parse_request(fname string, msg *SCORSHmsg) error {
 	return nil
 }
 
-
 func spooler(watcher *fsnotify.Watcher, worker chan SCORSHmsg) {
 
 	log.Println("Spooler started correctly")
 
 	var msg *SCORSHmsg
 	msg = new(SCORSHmsg)
-	
+
 	for {
 		select {
 		case event := <-watcher.Events:
@@ -61,7 +58,6 @@ func spooler(watcher *fsnotify.Watcher, worker chan SCORSHmsg) {
 	}
 }
 
-
 func StartSpooler(master *SCORSHmaster) error {
 
 	watcher, err := fsnotify.NewWatcher()
@@ -74,8 +70,8 @@ func StartSpooler(master *SCORSHmaster) error {
 	if err != nil {
 		return fmt.Errorf("Error adding folder: %s\n", err)
 	}
-	
+
 	go spooler(watcher, master.Spooler)
-	
+
 	return nil
 }
