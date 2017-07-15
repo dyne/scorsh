@@ -6,7 +6,20 @@ import (
 	"log"
 )
 
+// manage debugging messages 
 
+const debug debugging = true
+
+type debugging bool
+
+
+func (d debugging) log(format string, args ...interface{}){
+	if d {
+		log.Printf(format, args...)
+	}
+}
+
+///////////
 
 var conf_file = flag.String("c", "./scorsh.cfg", "Configuration file for SCORSH")
 
@@ -37,9 +50,10 @@ func FindMatchingWorkers(master *SCORSHmaster, msg *SCORSHmsg) []*SCORSHworker {
 	
 	var ret []*SCORSHworker
 	
-	for _,w := range master.Workers {
-		if w.Matches(msg.repo, msg.branch) {
-			ret = append(ret, &w)
+	for idx,w := range master.Workers {
+		if w.Matches(msg.Repo, msg.Branch) {
+			debug.log("--- Worker: %s matches %s:%s\n", w.Name, msg.Repo, msg.Branch)
+			ret = append(ret, &(master.Workers[idx]))
 		}
 	}
 	return ret
@@ -55,12 +69,19 @@ func Master(master *SCORSHmaster) {
 	
 	matching_workers = make([]*SCORSHworker, len(master.Workers))
 
+	log.Println("[master] Master started ")
+	
 	for {
 		select {
 		// - receive stuff from the spooler
 		case push_msg = <- master.Spooler:
+
+			debug.log("[master] received message: %s\n", push_msg)
+			
 			// - lookup the repos map for matching workers
 			matching_workers = FindMatchingWorkers(master, &push_msg)
+			debug.log("[master] matching workers: %s\n", matching_workers)
+			
 			// add the message to PendingMsg
 			//...
 			// - dispatch the message to all the matching workers
@@ -75,11 +96,14 @@ func Master(master *SCORSHmaster) {
 func InitMaster() *SCORSHmaster {
 
 	master := ReadGlobalConfig(*conf_file)
+
 	
 	master.Repos = make(map[string][]*SCORSHworker)
 	master.WorkingMsg = make(map[string]int)
 	// This is the mutex-channel on which we receive acks from workers
 	master.StatusChan = make(chan SCORSHmsg, 1)
+	master.Spooler = make(chan SCORSHmsg, 1)
+
 	
 	err_workers := StartWorkers(master)
 	if err_workers != nil {
@@ -90,9 +114,7 @@ func InitMaster() *SCORSHmaster {
 	err_spooler := StartSpooler(master)
 	if err_spooler != nil {
 		log.Fatal("Error starting spooler: ", err_spooler)
-	} else {
-		log.Println("Spooler started correctly")
-	}
+	} 
 	return master
 	
 }
@@ -101,8 +123,11 @@ func InitMaster() *SCORSHmaster {
 func main() {
 
 	flag.Parse()
-
+	
 	master := InitMaster()
 	
 	go Master(master)
+
+	<- master.StatusChan
+	
 }

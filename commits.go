@@ -53,9 +53,9 @@ func walk_commits(msg SCORSHmsg, w *SCORSHworker) error {
 
 	fmt.Printf("Inside parse_commits\n")
 
-	reponame := msg.repo
-	old_rev := msg.old_rev
-	new_rev := msg.new_rev
+	reponame := msg.Repo
+	old_rev := msg.Old_rev
+	new_rev := msg.New_rev
 
 	repo, err := git.OpenRepository(reponame)
 	if err != nil {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/go-yaml/yaml"
 	"io"
@@ -41,7 +40,7 @@ func ReadGlobalConfig(fname string) *SCORSHmaster {
 	}
 
 	if cfg.LogPrefix != "" {
-		log.SetPrefix(cfg.LogPrefix)
+		log.SetPrefix(cfg.LogPrefix+ " ")
 	}
 
 	// If the user has not set a spooldir, crash loudly
@@ -54,46 +53,10 @@ func ReadGlobalConfig(fname string) *SCORSHmaster {
 	// Check if the user wants to redirect the logs to a file
 
 	// If we got so far, then there is some sort of config in cfg
+	log.Printf("----- Starting SCORSH -----\n")
 	log.Printf("Successfully read config from %s\n", fname)
 
 	return cfg
 
 }
 
-func (cfg *SCORSHmaster) String() string {
-
-	var buff bytes.Buffer
-
-	buff.WriteString("spooldir: ")
-	buff.WriteString(cfg.Spooldir)
-	buff.WriteString("\nlogfile: ")
-	buff.WriteString(cfg.Logfile)
-	buff.WriteString("\nlogprefix: ")
-	buff.WriteString(cfg.LogPrefix)
-	buff.WriteString("\nWorkers: \n")
-
-	for _, w := range cfg.Workers {
-		buff.WriteString("---\n  name: ")
-		buff.WriteString(w.Name)
-		buff.WriteString("\n  repos: ")
-		for _, r := range w.Repos {
-			buff.WriteString("\n    ")
-			buff.WriteString(r)
-		}
-		buff.WriteString("\n  folder: ")
-		buff.WriteString(w.Folder)
-		buff.WriteString("\n  logfile: ")
-		buff.WriteString(w.Logfile)
-		buff.WriteString("\n  tagfile: ")
-		buff.WriteString(w.Tagfile)
-		buff.WriteString("\n  keyrings: ")
-		for _, k := range w.Keyrings {
-			buff.WriteString("\n    ")
-			buff.WriteString(k)
-		}
-		buff.WriteString("\n...\n")
-
-	}
-
-	return buff.String()
-}
