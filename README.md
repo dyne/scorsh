@@ -1,4 +1,5 @@
 # scorsh
+
 Signed-Commit Remote Shell
 
 
@@ -9,7 +10,7 @@ signed git commits.
 
 **This is still work-in-progress, not ready to be used yet**
 
-# WTF
+## WTF
 
 ...if you have ever felt that git hooks fall too short to your standards...
 
@@ -53,3 +54,41 @@ just URLs, at the moment restricted to two possible types:
   e.g., Jenkins or Travis builds...)
   
 
+
+
+## Build notes
+
+**scorsh** depends from the availability of a native build of
+`libgit2` version `0.25` or greater on the native system where
+***scorsh** is built. This dependencies is easily satisfied on various
+operating systems by using their respective package manager. For
+instance in Devuan ASCII one can simply do:
+
+```
+sudo apt install libgit2-dev
+```
+
+In Devuan Jessie unfortunately `libgit2` is older than `0.25` so one
+should first build `git2go` from its repository, in which `libgit2` is a
+submodule to be built from scratch.
+
+```
+git clone https://github.com/libgit2/git2go
+cd git2go
+git submodule init
+git submodule update
+cd libgit2
+cmake .
+make
+sudo make install
+```
+
+Then proceed installing dependencies for **scorsh**:
+```
+make deps
+```
+
+And finally build its binary:
+```
+make
+```
