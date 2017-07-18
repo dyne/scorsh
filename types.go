@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"golang.org/x/crypto/openpgp"
 )
 
@@ -16,11 +17,12 @@ const (
 // the SCORSHmsg type represents messages received from the spool and
 // sent to workers
 type SCORSHmsg struct {
-	Name    string `yaml:"m_id"`
+	Id      string `yaml:"m_id"`
 	Repo    string `yaml:"m_repo"`
 	Branch  string `yaml:"m_branch"`
 	Old_rev string `yaml:"m_oldrev"`
 	New_rev string `yaml:"m_newrev"`
+	Path    string
 }
 
 type SCORSHcmd struct {
@@ -28,7 +30,7 @@ type SCORSHcmd struct {
 	Hash string `yaml:"c_hash"`
 }
 
-type SCORSHtag struct {
+type SCORSHtag_cfg struct {
 	Name     string      `yaml:"t_name"`
 	Keyrings []string    `yaml:"t_keyrings"`
 	Commands []SCORSHcmd `yaml:"t_commands"`
@@ -36,13 +38,13 @@ type SCORSHtag struct {
 
 // Configuration of a worker
 type SCORSHworker_cfg struct {
-	Name     string      `yaml:"w_name"`
-	Repos    []string    `yaml:"w_repos"`
-	Folder   string      `yaml:"w_folder"`
-	Logfile  string      `yaml:"w_logfile"`
-	Tagfile  string      `yaml:"w_tagfile"`
-	Keyrings []string    `yaml:"w_keyrings"`
-	Tags     []SCORSHtag `yaml:"w_tags"`
+	Name     string          `yaml:"w_name"`
+	Repos    []string        `yaml:"w_repos"`
+	Folder   string          `yaml:"w_folder"`
+	Logfile  string          `yaml:"w_logfile"`
+	Tagfile  string          `yaml:"w_tagfile"`
+	Keyrings []string        `yaml:"w_keyrings"`
+	Tags     []SCORSHtag_cfg `yaml:"w_tags"`
 }
 
 // State of a worker
@@ -82,39 +84,30 @@ type SCORSHmaster struct {
 	SCORSHmaster_state
 }
 
+// client commands
+
+type SCORSHtag struct {
+	Tag  string   `yaml:"s_tag"`
+	Args []string `yaml:"s_args"`
+}
+
+type SCORSHclient_msg struct {
+	Tags []SCORSHtag `yaml:"scorsh"`
+}
+
+////////////////////////
+
 func (cfg *SCORSHmaster) String() string {
 
 	var buff bytes.Buffer
 
-	buff.WriteString("spooldir: ")
-	buff.WriteString(cfg.Spooldir)
-	buff.WriteString("\nlogfile: ")
-	buff.WriteString(cfg.Logfile)
-	buff.WriteString("\nlogprefix: ")
-	buff.WriteString(cfg.LogPrefix)
-	buff.WriteString("\nWorkers: \n")
+	fmt.Fprintf(&buff, "spooldir: %s\n", cfg.Spooldir)
+	fmt.Fprintf(&buff, "logfile: %s\n", cfg.Logfile)
+	fmt.Fprintf(&buff, "logprefix: %s\n", cfg.LogPrefix)
+	fmt.Fprintf(&buff, "Workers: \n")
 
 	for _, w := range cfg.Workers {
-		buff.WriteString("---\n  name: ")
-		buff.WriteString(w.Name)
-		buff.WriteString("\n  repos: ")
-		for _, r := range w.Repos {
-			buff.WriteString("\n    ")
-			buff.WriteString(r)
-		}
-		buff.WriteString("\n  folder: ")
-		buff.WriteString(w.Folder)
-		buff.WriteString("\n  logfile: ")
-		buff.WriteString(w.Logfile)
-		buff.WriteString("\n  tagfile: ")
-		buff.WriteString(w.Tagfile)
-		buff.WriteString("\n  keyrings: ")
-		for _, k := range w.Keyrings {
-			buff.WriteString("\n    ")
-			buff.WriteString(k)
-		}
-		buff.WriteString("\n...\n")
-
+		fmt.Fprintf(&buff, "%s", &w)
 	}
 
 	return buff.String()
@@ -123,16 +116,26 @@ func (cfg *SCORSHmaster) String() string {
 func (msg *SCORSHmsg) String() string {
 
 	var buff bytes.Buffer
-	buff.WriteString("\nName: ")
-	buff.WriteString(msg.Name)
-	buff.WriteString("\nRepo: ")
-	buff.WriteString(msg.Repo)
-	buff.WriteString("\nBranch: ")
-	buff.WriteString(msg.Branch)
-	buff.WriteString("\nOld_rev: ")
-	buff.WriteString(msg.Old_rev)
-	buff.WriteString("\nNew_rev: ")
-	buff.WriteString(msg.New_rev)
+	fmt.Fprintf(&buff, "Id: %s\n", msg.Id)
+	fmt.Fprintf(&buff, "Repo: %s\n", msg.Repo)
+	fmt.Fprintf(&buff, "Branch: %s\n", msg.Branch)
+	fmt.Fprintf(&buff, "Old_Rev: %s\n", msg.Old_rev)
+	fmt.Fprintf(&buff, "New_rev: %s\n", msg.New_rev)
+	fmt.Fprintf(&buff, "Path: %s\n", msg.Path)
+
 	return buff.String()
 
+}
+
+func (w *SCORSHworker) String() string {
+
+	var buff bytes.Buffer
+	fmt.Fprintf(&buff, "Name: %s\n", w.Name)
+	fmt.Fprintf(&buff, "Repos: %s\n", w.Repos)
+	fmt.Fprintf(&buff, "Folder: %s\n", w.Folder)
+	fmt.Fprintf(&buff, "Logfile: %s\n", w.Logfile)
+	fmt.Fprintf(&buff, "Tagfile: %s\n", w.Tagfile)
+	fmt.Fprintf(&buff, "Keyrings: %s\n", w.Keyrings)
+
+	return buff.String()
 }

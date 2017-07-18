@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 )
 
 func (worker *SCORSHworker) Matches(repo, branch string) bool {
@@ -80,20 +81,26 @@ func Worker(w *SCORSHworker) {
 	var msg SCORSHmsg
 
 	log.Printf("[worker: %s] Started\n", w.Name)
+	debug.log("[worker: %s] MsgChan: %s\n", w.Name, w.MsgChan)
 
+	// notify that we have been started!
 	w.StatusChan <- msg
 
 	// This is the main worker loop
 	for {
 		select {
 		case msg = <-w.MsgChan:
-			debug.log("[worker: %s] received message %s\n", w.Name, msg.Name)
+			debug.log("[worker: %s] received message %s\n", w.Name, msg.Id)
 			// process message
 			// err := walk_commits(msg, w)
 			// if err != nil {
 			// 	log.Printf("[worker: %s] error in walk_commits: %s", err)
 			// }
-			log.Printf("[worker: %s] Received message: ", w.Name, msg)
+			debug.log("[worker: %s] Received message: %s", w.Name, msg)
+			debug.log("[worker: %s] StatusChan: %s\n", w.Name, w.StatusChan)
+			time.Sleep(1000 * time.Millisecond)
+			w.StatusChan <- msg
+			debug.log("[worker: %s] Sent message back: %s", w.Name, msg)
 		}
 	}
 }
@@ -113,7 +120,7 @@ func StartWorkers(master *SCORSHmaster) error {
 		worker := &(master.Workers[w])
 		// Set the Status and Msg channels
 		worker.StatusChan = master.StatusChan
-		worker.MsgChan = make(chan SCORSHmsg)
+		worker.MsgChan = make(chan SCORSHmsg, 10)
 		// Load worker keyrings
 		err := worker.LoadKeyrings()
 		if err != nil {

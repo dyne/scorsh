@@ -6,6 +6,7 @@ import (
 	"github.com/go-yaml/yaml"
 	"io/ioutil"
 	"log"
+	"os"
 	//	"time"
 )
 
@@ -32,28 +33,40 @@ func parse_request(fname string, msg *SCORSHmsg) error {
 	return nil
 }
 
-func spooler(watcher *fsnotify.Watcher, worker chan SCORSHmsg) {
+func spooler(watcher *fsnotify.Watcher, master chan SCORSHmsg) {
 
 	log.Println("Spooler started correctly")
-
-	var msg *SCORSHmsg
-	msg = new(SCORSHmsg)
 
 	for {
 		select {
 		case event := <-watcher.Events:
+			// Here we manage genuine events from fsnotify. We catch the
+			// "Write" event, which should happen only when the file is
+			// created
 			if event.Op == fsnotify.Write {
-				//time.Sleep(1000 * time.Millisecond)
+				var msg SCORSHmsg
 				debug.log("[spooler] new file %s detected\n", event.Name)
-				err := parse_request(event.Name, msg)
+				err := parse_request(event.Name, &msg)
 				if err != nil {
 					log.Printf("Invalid packet received. [%s]\n", err)
 				}
 				debug.log("[spooler] read message: %s\n", msg)
-				worker <- *msg
+				msg.Path = event.Name
+				master <- msg
 			}
 		case err := <-watcher.Errors:
-			log.Println("error:", err)
+			// here we manage event errors
+			log.Println("[spooler] error: ", err)
+		case msg := <-master:
+			// Here we receive messages from the master about files to be
+			// removed
+			log.Printf("[spooler] received deletion request for: %s\n", msg.Path)
+			err := os.Remove(msg.Path)
+			if err != nil {
+				log.Printf("[spooler] error removing file: %s\n", err)
+			} else {
+				log.Printf("[spooler] file %s successfully removed\n", msg.Path)
+			}
 		}
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/KatolaZ/git2go"
 	"golang.org/x/crypto/openpgp"
+	"log"
 	"os"
 	"strings"
 	//	"log"
@@ -23,15 +24,15 @@ func CommitToString(commit *git.Commit) string {
 }
 
 // FIXME: RETURN THE ENTITY PROVIDED BY THE CHECK, OR nil
-func check_signature(commit *git.Commit, keys []*openpgp.KeyRing) (signature, signed string, err error) {
+func check_signature(commit *git.Commit, keys *map[string]openpgp.KeyRing) (signature, signed string, err error) {
 
 	signature, signed, err = commit.ExtractSignature()
 
 	if err == nil {
-		for _, keyring := range keys {
+		for _, keyring := range *keys {
 
 			_, err_sig :=
-				openpgp.CheckArmoredDetachedSignature(*keyring, strings.NewReader(signed),
+				openpgp.CheckArmoredDetachedSignature(keyring, strings.NewReader(signed),
 					strings.NewReader(signature))
 
 			if err_sig == nil {
@@ -43,6 +44,14 @@ func check_signature(commit *git.Commit, keys []*openpgp.KeyRing) (signature, si
 	}
 
 	return "", "", err
+}
+
+func find_scorsh_message(commit *git.Commit) (string, error) {
+
+	msg := commit.RawMessage()
+	debug.log("[find_scorsg_msg] found message:\n %s\n", msg)
+
+	return msg, nil
 }
 
 // traverse all the commits between two references, looking for scorsh
@@ -91,12 +100,17 @@ func walk_commits(msg SCORSHmsg, w *SCORSHworker) error {
 			// check if it can be verified by any of the keyrings associated
 			// with the scorsh-tag
 
-			//signature, signed, err := check_signature(commit, &keyring)
+			// check if the commit contains a scorsh command
+
+			_, err = find_scorsh_message(commit)
+
+			//signature, signed, err := check_signature(commit, &w.Keys)
 			//_, _, err := check_signature(commit, w.keys)
-			//if err != nil {
-			//	log.Printf("%s\n", SCORSHerr(SCORSH_ERR_SIGNATURE))
-			//
-			//}
+			if err != nil {
+				log.Printf("[worker: %s] %s\n", w.Name, SCORSHerr(SCORSH_ERR_SIGNATURE))
+			} else {
+
+			}
 			cur_commit = commit.Parent(0)
 		} else {
 			fmt.Printf("Commit %x not found!\n", cur_commit.Id())
