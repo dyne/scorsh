@@ -9,7 +9,6 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"time"
 )
 
 func (worker *SCORSHworker) Matches(repo, branch string) bool {
@@ -96,9 +95,6 @@ func Worker(w *SCORSHworker) {
 			if err != nil {
 				log.Printf("[worker: %s] error in walk_commits: %s", err)
 			}
-			debug.log("[worker: %s] Received message: %s", w.Name, msg)
-			debug.log("[worker: %s] StatusChan: %s\n", w.Name, w.StatusChan)
-			time.Sleep(1000 * time.Millisecond)
 			w.StatusChan <- msg
 			debug.log("[worker: %s] Sent message back: %s", w.Name, msg)
 		}
@@ -133,6 +129,16 @@ func StartWorkers(master *SCORSHmaster) error {
 			close(worker.MsgChan)
 			return fmt.Errorf("[Starting worker: %s] Unable to load tags: %s\n", worker.Name, err)
 		}
+
+		// Create the map of keyring for each tag
+		worker.TagKeys = make(map[string]map[string]bool)
+		for _, t := range worker.Tags {
+			worker.TagKeys[t.Name] = make(map[string]bool)
+			for _, k := range t.Keyrings {
+				worker.TagKeys[t.Name][k] = true
+			}
+		}
+
 		// Add the repos definitions to the map master.Repos
 		for _, repo_name := range worker.Repos {
 			master.Repos[repo_name] = append(master.Repos[repo_name], worker)

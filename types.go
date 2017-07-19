@@ -45,6 +45,7 @@ type SCORSHworker_cfg struct {
 	Tagfile  string          `yaml:"w_tagfile"`
 	Keyrings []string        `yaml:"w_keyrings"`
 	Tags     []SCORSHtag_cfg `yaml:"w_tags"`
+	TagKeys  map[string]map[string]bool
 }
 
 // State of a worker

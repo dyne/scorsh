@@ -71,9 +71,38 @@ func get_valid_keys(commit *git.Commit, keys *map[string]openpgp.KeyRing) []stri
 	return ret
 }
 
-func exec_tag(tag SCORSHtag, valid_keys []string) error {
+func intersect_keys(ref map[string]bool, keys []string) []string {
 
-	return nil
+	var ret []string
+
+	for _, k := range keys {
+
+		if _, ok := ref[k]; ok {
+			ret = append(ret, k)
+		}
+	}
+	return ret
+}
+
+func find_tag_config(tag_name string, w *SCORSHworker) (*SCORSHtag_cfg, bool) {
+
+	for _, c := range w.Tags {
+		if c.Name == tag_name {
+			return &c, true
+		}
+	}
+	return nil, false
+}
+
+func exec_tag(tag *SCORSHtag_cfg) []error {
+
+	var ret []error
+
+	for _, c := range tag.Commands {
+		debug.log("[tag: %s] attempting command: %s\n", tag.Name, c.URL)
+		ret = append(ret, nil)
+	}
+	return ret
 }
 
 // traverse all the commits between two references, looking for scorsh
@@ -143,18 +172,32 @@ func walk_commits(msg SCORSHmsg, w *SCORSHworker) error {
 
 				// 1) get the list of all the keys which verify the message
 				valid_keys := get_valid_keys(commit, &(w.Keys))
-				debug.log("validated keyrings on commit: %s\n", valid_keys)
-				// 2) Try to execute each of the tag included in the message
+				debug.log("[worker: %s] validated keyrings on commit: %s\n", w.Name, valid_keys)
 
+				// 2) then for each tag in the message
 				for _, t := range tags.Tags {
-					err = exec_tag(t, valid_keys)
-					if err != nil {
-						log.Printf("[worker: %s] unable to execute tag: %s : %s", w.Name, t.Tag, err)
-					} else {
-						log.Printf("[worker: %s] tag %s executed\n", w.Name, t.Tag)
+					// a) check that the tag is among those accepted by the worker
+					tag_cfg, good_tag := find_tag_config(t.Tag, w)
+					debug.log("[worker: %s] good_tag: %s\n", w.Name, good_tag)
+
+					if !good_tag {
+						continue
+					}
+
+					// b) check that at least one of the accepted tag keys is in valid_keys
+					good_keys := intersect_keys(w.TagKeys[t.Tag], valid_keys) != nil
+					debug.log("[worker: %s] good_keys: %s\n", w.Name, good_keys)
+
+					if !good_keys {
+						continue
+					}
+
+					// c) If everything is OK, execute the tag
+					if good_tag && good_keys {
+						errs := exec_tag(tag_cfg)
+						debug.log("[worker: %s] errors in tag %s: %s\n", w.Name, t.Tag, errs)
 					}
 				}
-
 			}
 
 			//signature, signed, err := check_signature(commit, &w.Keys)
