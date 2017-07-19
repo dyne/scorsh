@@ -1,13 +1,13 @@
 BUILD=go build
 
-SOURCES=scorsh.go \
+SERVER_SOURCES=scorshd.go \
 types.go \
 config.go \
 spooler.go \
 commits.go \
 workers.go
 
-all: scorsh
+all: scorshd
 
 deps:
 	go get 'github.com/fsnotify/fsnotify'
@@ -15,8 +15,8 @@ deps:
 	go get 'github.com/go-yaml/yaml'
 	go get 'golang.org/x/crypto/openpgp'
 
-scorsh: $(SOURCES)
-	$(BUILD) scorsh.go types.go config.go spooler.go commits.go workers.go
+scorshd: $(SERVER_SOURCES)
+	$(BUILD) scorshd.go types.go config.go spooler.go commits.go workers.go
 
 clean:
-	rm scorsh
+	rm scorshd

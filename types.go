@@ -139,3 +139,19 @@ func (w *SCORSHworker) String() string {
 
 	return buff.String()
 }
+
+func (msg *SCORSHclient_msg) String() string {
+
+	var buff bytes.Buffer
+
+	for _, t := range msg.Tags {
+
+		fmt.Fprintf(&buff, "s_tag: %s\n", t.Tag)
+		for _, a := range t.Args {
+			fmt.Fprintf(&buff, "  s_args: %s\n", a)
+		}
+	}
+
+	return buff.String()
+
+}

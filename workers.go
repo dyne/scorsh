@@ -92,10 +92,10 @@ func Worker(w *SCORSHworker) {
 		case msg = <-w.MsgChan:
 			debug.log("[worker: %s] received message %s\n", w.Name, msg.Id)
 			// process message
-			// err := walk_commits(msg, w)
-			// if err != nil {
-			// 	log.Printf("[worker: %s] error in walk_commits: %s", err)
-			// }
+			err := walk_commits(msg, w)
+			if err != nil {
+				log.Printf("[worker: %s] error in walk_commits: %s", err)
+			}
 			debug.log("[worker: %s] Received message: %s", w.Name, msg)
 			debug.log("[worker: %s] StatusChan: %s\n", w.Name, w.StatusChan)
 			time.Sleep(1000 * time.Millisecond)
