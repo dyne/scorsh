@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"net/url"
@@ -19,17 +20,15 @@ func exec_local_file(cmd_url *url.URL, args, env []string) error {
 	}
 
 	if err == nil {
-		err = cmd.Start()
-		if err == nil {
-			var output []byte
-			_, err := stdout.Read(output)
-			if err != nil {
-				log.Printf("[%s - stout follows: ]\n%s\n", output)
-				err = cmd.Wait()
+		if err = cmd.Start(); err == nil {
+			buff := bufio.NewScanner(stdout)
+			log.Printf("[%s - stout follows: ]\n", cmd.Path)
+			for buff.Scan() {
+				log.Printf(buff.Text()) // write each line to your log, or anything you need
 			}
+			err = cmd.Wait()
 		}
 	}
-
 	return err
 }
 
@@ -65,7 +64,7 @@ func set_environment(msg *SCORSHmsg) []string {
 	env = append(env, fmt.Sprintf("SCORSH_REPO=%s", msg.Repo))
 	env = append(env, fmt.Sprintf("SCORSH_BRANCH=%s", msg.Branch))
 	env = append(env, fmt.Sprintf("SCORSH_OLDREV=%s", msg.Old_rev))
-	env = append(env, fmt.Sprintf("SCORSH_NEWREV_=%s", msg.New_rev))
-	env = append(env, fmt.Sprintf("SCORSH_ID_=%s", msg.Id))
+	env = append(env, fmt.Sprintf("SCORSH_NEWREV=%s", msg.New_rev))
+	env = append(env, fmt.Sprintf("SCORSH_ID=%s", msg.Id))
 	return env
 }
