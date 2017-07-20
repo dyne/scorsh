@@ -57,7 +57,7 @@ func find_scorsh_message(commit *git.Commit) (string, error) {
 	return msg[idx:], nil
 }
 
-// return a list of keyring names which verify the signature of this commit
+// return a list of keyring names which verify the signature of a given commit
 func get_valid_keys(commit *git.Commit, keys *map[string]openpgp.KeyRing) []string {
 
 	var ret []string
@@ -100,6 +100,7 @@ func exec_tag(tag *SCORSHtag_cfg) []error {
 
 	for _, c := range tag.Commands {
 		debug.log("[tag: %s] attempting command: %s\n", tag.Name, c.URL)
+
 		ret = append(ret, nil)
 	}
 	return ret
