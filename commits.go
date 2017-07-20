@@ -94,18 +94,6 @@ func find_tag_config(tag_name string, w *SCORSHworker) (*SCORSHtag_cfg, bool) {
 	return nil, false
 }
 
-func exec_tag(tag *SCORSHtag_cfg) []error {
-
-	var ret []error
-
-	for _, c := range tag.Commands {
-		debug.log("[tag: %s] attempting command: %s\n", tag.Name, c.URL)
-
-		ret = append(ret, nil)
-	}
-	return ret
-}
-
 // traverse all the commits between two references, looking for scorsh
 // commands
 // fixme: we don't have just one keyring here....
@@ -182,6 +170,7 @@ func walk_commits(msg SCORSHmsg, w *SCORSHworker) error {
 					debug.log("[worker: %s] good_tag: %s\n", w.Name, good_tag)
 
 					if !good_tag {
+						debug.log("[worker: %s] unsupported tag: %s\n", w.Name, t.Tag)
 						continue
 					}
 
@@ -190,19 +179,18 @@ func walk_commits(msg SCORSHmsg, w *SCORSHworker) error {
 					debug.log("[worker: %s] good_keys: %s\n", w.Name, good_keys)
 
 					if !good_keys {
+						debug.log("[worker: %s] no matching keys for tag: %s\n", w.Name, t.Tag)
 						continue
 					}
 
 					// c) If everything is OK, execute the tag
 					if good_tag && good_keys {
-						errs := exec_tag(tag_cfg)
+						env := set_environment(&msg)
+						errs := exec_tag(tag_cfg, t.Args, env)
 						debug.log("[worker: %s] errors in tag %s: %s\n", w.Name, t.Tag, errs)
 					}
 				}
 			}
-
-			//signature, signed, err := check_signature(commit, &w.Keys)
-			//_, _, err := check_signature(commit, w.keys)
 
 			cur_commit = commit.Parent(0)
 		} else {

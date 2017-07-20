@@ -5,7 +5,8 @@ types.go \
 config.go \
 spooler.go \
 commits.go \
-workers.go
+workers.go \
+exec.go
 
 all: scorshd
 
@@ -16,7 +17,7 @@ deps:
 	go get 'golang.org/x/crypto/openpgp'
 
 scorshd: $(SERVER_SOURCES)
-	$(BUILD) scorshd.go types.go config.go spooler.go commits.go workers.go
+	$(BUILD) $(SERVER_SOURCES)
 
 clean:
 	rm scorshd
