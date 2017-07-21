@@ -24,9 +24,7 @@ while read old_value new_value ref; do
 	echo "old_rev: ${old_value}"
 	echo "new_rev: ${new_value}"
 	echo "spool_dir: ${spool_dir}"
-done
-
-cat <<EOF
+  cat <<EOF >${spool_dir}/${id}
 ---
 m_id: $id 
 m_repo: $repo
@@ -34,6 +32,10 @@ m_branch: $branch
 m_oldrev: ${old_value}
 m_newrev: ${new_value}
 ...
-EOF>${spool_dir}/${id}
+EOF
+  
+done
+
+
 
 

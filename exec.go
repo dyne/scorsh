@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"crypto/sha256"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
@@ -32,6 +34,22 @@ func exec_local_file(cmd_url *url.URL, args, env []string) error {
 	return err
 }
 
+func check_hash(file, hash string) error {
+
+	data, err := ioutil.ReadFile(file)
+	if err != nil {
+		return err
+	}
+	hash_bytes := sha256.Sum256(data)
+	computed_hash := string(hash_bytes[:sha256.Size])
+	if string(computed_hash) == hash {
+		return nil
+	} else {
+		return fmt.Errorf("WARNING!!! HASH MISMATCH FOR %s", file)
+	}
+
+}
+
 func exec_url(cmd_url *url.URL, args, env []string) error {
 
 	return nil
@@ -48,11 +66,20 @@ func exec_tag(tag *SCORSHtag_cfg, args []string, env []string) []error {
 			log.Printf("[tag: %s] error parsing URL: %s", tag.Name, err)
 		} else {
 			if cmd_url.Scheme == "file" {
-				//if err = check_hash(cmd_url, c.Hash); err == nil {
-				err = exec_local_file(cmd_url, args, env)
-				//} else {
-				//log.Printf("[tag: %s] WARNING!!! HASH MISMATCH FOR %s\n", cmd_url)
-				//}
+				err = nil
+				// if a hash is specified, check that it matches
+				if c.Hash != "" {
+					err = check_hash(cmd_url.Path, c.Hash)
+				}
+				// if the hash does not match, abort the command
+				if err != nil {
+					log.Printf("[tag: %s] %s -- aborting command\n", tag.Name, err)
+					continue
+				} else {
+					// finally, the command can be executed
+					err = exec_local_file(cmd_url, args, env)
+				}
+
 			} else if cmd_url.Scheme == "http" || cmd_url.Scheme == "https" {
 				err = exec_url(cmd_url, args, env)
 			}
