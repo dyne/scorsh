@@ -13,7 +13,7 @@ all: scorshd
 deps:
 	go get 'github.com/fsnotify/fsnotify'
 	go get 'github.com/libgit2/git2go'
-	go get 'github.com/go-yaml/yaml'
+	go get 'gopkg.in/yaml.v2'
 	go get 'golang.org/x/crypto/openpgp'
 
 scorshd: $(SERVER_SOURCES)

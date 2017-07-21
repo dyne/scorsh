@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-yaml/yaml"
 	"golang.org/x/crypto/openpgp"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
