@@ -196,7 +196,7 @@ func walk_commits(msg SCORSHmsg, w *SCORSHworker) error {
 
 					// c) If everything is OK, execute the tag
 					if good_tag && good_keys {
-						env := set_environment(&msg, t.Tag, get_author_email(), get_committer_email())
+						env := set_environment(&msg, t.Tag, get_author_email(commit), get_committer_email(commit))
 						errs := exec_tag(tag_cfg, t.Args, env)
 						debug.log("[worker: %s] errors in tag %s: %s\n", w.Name, t.Tag, errs)
 					}
