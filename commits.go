@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/KatolaZ/git2go"
-	"github.com/go-yaml/yaml"
 	"golang.org/x/crypto/openpgp"
+	"gopkg.in/yaml.v2"
 	"log"
 	"os"
 	"strings"
