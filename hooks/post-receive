@@ -1,0 +1,39 @@
+#!/bin/sh
+
+SCORSH_CFG="scorsh"
+SCORSH_VAR="scorsh.spooldir"
+
+while read old_value new_value ref; do 
+	echo "arguments: ${old_value} ${new_value} ${ref} "
+	msg=$(git cat-file -p ${ref})
+
+	echo "Got reference:"
+	printf "$msg"
+	echo
+	echo "------"
+
+	repo=$(pwd)
+	branch=$(echo ${ref} | sed -r -e 's:refs/heads/::g')
+	now=$(date +%s)
+	id="${new_value}_${now}"
+
+	spool_dir=$(git config -f ${SCORSH_CFG} ${SCORSH_VAR})
+	echo "id: ${id}"
+	echo "repo: ${repo}"
+	echo "branch: ${branch}"
+	echo "old_rev: ${old_value}"
+	echo "new_rev: ${new_value}"
+	echo "spool_dir: ${spool_dir}"
+done
+
+cat <<EOF
+---
+m_id: $id 
+m_repo: $repo
+m_branch: $branch
+m_oldrev: ${old_value}
+m_newrev: ${new_value}
+...
+EOF>${spool_dir}/${id}
+
+

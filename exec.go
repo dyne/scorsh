@@ -48,7 +48,11 @@ func exec_tag(tag *SCORSHtag_cfg, args []string, env []string) []error {
 			log.Printf("[tag: %s] error parsing URL: %s", tag.Name, err)
 		} else {
 			if cmd_url.Scheme == "file" {
+				//if err = check_hash(cmd_url, c.Hash); err == nil {
 				err = exec_local_file(cmd_url, args, env)
+				//} else {
+				//log.Printf("[tag: %s] WARNING!!! HASH MISMATCH FOR %s\n", cmd_url)
+				//}
 			} else if cmd_url.Scheme == "http" || cmd_url.Scheme == "https" {
 				err = exec_url(cmd_url, args, env)
 			}
@@ -58,7 +62,7 @@ func exec_tag(tag *SCORSHtag_cfg, args []string, env []string) []error {
 	return ret
 }
 
-func set_environment(msg *SCORSHmsg) []string {
+func set_environment(msg *SCORSHmsg, tag, author, committer string) []string {
 
 	env := os.Environ()
 	env = append(env, fmt.Sprintf("SCORSH_REPO=%s", msg.Repo))
@@ -66,5 +70,9 @@ func set_environment(msg *SCORSHmsg) []string {
 	env = append(env, fmt.Sprintf("SCORSH_OLDREV=%s", msg.Old_rev))
 	env = append(env, fmt.Sprintf("SCORSH_NEWREV=%s", msg.New_rev))
 	env = append(env, fmt.Sprintf("SCORSH_ID=%s", msg.Id))
+	env = append(env, fmt.Sprintf("SCORSH_TAG=%s", tag))
+	env = append(env, fmt.Sprintf("SCORSH_AUTHOR=%s", author))
+	env = append(env, fmt.Sprintf("SCORSH_COMMITTER=%s", committer))
+
 	return env
 }

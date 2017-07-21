@@ -94,9 +94,21 @@ func find_tag_config(tag_name string, w *SCORSHworker) (*SCORSHtag_cfg, bool) {
 	return nil, false
 }
 
-// traverse all the commits between two references, looking for scorsh
-// commands
-// fixme: we don't have just one keyring here....
+func get_author_email(c *git.Commit) string {
+
+	sig := c.Author()
+	return sig.Email
+}
+
+func get_committer_email(c *git.Commit) string {
+
+	sig := c.Committer()
+	return sig.Email
+
+}
+
+// walk_commits traverses all the commits between two references,
+// looking for scorsh commands, and tries to execute those if found
 func walk_commits(msg SCORSHmsg, w *SCORSHworker) error {
 
 	var tags SCORSHclient_msg
@@ -138,13 +150,11 @@ func walk_commits(msg SCORSHmsg, w *SCORSHworker) error {
 		commit, err := repo.LookupCommit(cur_commit.Id())
 		if err == nil {
 
-			//debug.log("commit: %s", CommitToString(commit))
-			// We should look for scorsh-tags, and if the commit has any,
-			// check if it can be verified by any of the keyrings associated
-			// with that specific scorsh-tag
+			// We look for scorsh-tags, and if the commit has any, check if
+			// it can be verified by any of the keyrings associated with
+			// that specific scorsh-tag
 
-			// check if the commit contains a scorsh command
-
+			// Check if the commit contains a scorsh command
 			commit_msg, err = find_scorsh_message(commit)
 			if err != nil {
 				log.Printf("[worker: %s] %s\n", w.Name, SCORSHerr(SCORSH_ERR_SIGNATURE))
@@ -157,9 +167,9 @@ func walk_commits(msg SCORSHmsg, w *SCORSHworker) error {
 				// no scorsh message found
 				log.Printf("[worker: %s] no scorsh message found: %s", err)
 			} else {
-				// there is a scorsh message there so
+				// there is a scorsh message there so....
 
-				// 1) get the list of all the keys which verify the message
+				// 1) get the list of all the keyrings which verify the message
 				valid_keys := get_valid_keys(commit, &(w.Keys))
 				debug.log("[worker: %s] validated keyrings on commit: %s\n", w.Name, valid_keys)
 
@@ -174,7 +184,8 @@ func walk_commits(msg SCORSHmsg, w *SCORSHworker) error {
 						continue
 					}
 
-					// b) check that at least one of the accepted tag keys is in valid_keys
+					// b) check that at least one of the accepted tag keyrings
+					// is in valid_keys
 					good_keys := intersect_keys(w.TagKeys[t.Tag], valid_keys) != nil
 					debug.log("[worker: %s] good_keys: %s\n", w.Name, good_keys)
 
@@ -185,7 +196,7 @@ func walk_commits(msg SCORSHmsg, w *SCORSHworker) error {
 
 					// c) If everything is OK, execute the tag
 					if good_tag && good_keys {
-						env := set_environment(&msg)
+						env := set_environment(&msg, t.Tag, get_author_email(), get_committer_email())
 						errs := exec_tag(tag_cfg, t.Args, env)
 						debug.log("[worker: %s] errors in tag %s: %s\n", w.Name, t.Tag, errs)
 					}
