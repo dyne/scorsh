@@ -30,7 +30,7 @@ func (worker *SCORSHworker) Matches(repo, branch string) bool {
 
 func (w *SCORSHworker) LoadKeyrings() error {
 
-	w.Keys = make(map[string]openpgp.KeyRing, len(w.Keyrings))
+	w.Keys = make(map[string]openpgp.KeyRing)
 	w.TagKeys = make(map[string]map[string]bool)
 
 	for _, t := range w.Tags {

@@ -35,7 +35,7 @@ func check_signature(commit *git.Commit, keyring *openpgp.KeyRing) (signature, s
 				strings.NewReader(signature))
 
 		if err_sig == nil {
-			fmt.Printf("Good signature \n")
+			debug.log("[commit: %s] Good signature \n", commit.Id())
 			return signature, signed, nil
 		}
 		err = err_sig
@@ -49,11 +49,14 @@ func find_scorsh_message(commit *git.Commit) (string, error) {
 	sep := "---\n"
 
 	msg := commit.RawMessage()
-	debug.log("[find_scorsg_msg] found message:\n %s\n", msg)
+	debug.log("[find_scorsg_msg] found message:\n%s\n", msg)
 
 	// FIXME!!! replace the following with a proper regexp.Match
 	idx := strings.Index(msg, sep)
 
+	if idx < 0 {
+		return "", fmt.Errorf("no SCORSH message found\n")
+	}
 	return msg[idx:], nil
 }
 
@@ -114,7 +117,7 @@ func walk_commits(msg SCORSHmsg, w *SCORSHworker) error {
 	var tags SCORSHclient_msg
 	var commit_msg string
 
-	fmt.Printf("Inside parse_commits\n")
+	debug.log("[worker: %s] Inside parse_commits\n", w.Name)
 
 	reponame := msg.Repo
 	old_rev := msg.Old_rev
@@ -145,6 +148,7 @@ func walk_commits(msg SCORSHmsg, w *SCORSHworker) error {
 
 	cur_commit := newrev_commit
 
+	// FIXME: replace with a queue of commits
 	for cur_commit.Id().String() != oldrev_commit.Id().String() {
 
 		commit, err := repo.LookupCommit(cur_commit.Id())
@@ -156,53 +160,53 @@ func walk_commits(msg SCORSHmsg, w *SCORSHworker) error {
 
 			// Check if the commit contains a scorsh command
 			commit_msg, err = find_scorsh_message(commit)
-			if err != nil {
-				log.Printf("[worker: %s] %s\n", w.Name, SCORSHerr(SCORSH_ERR_SIGNATURE))
-			}
+			if err == nil {
+				// Check if is the comment contains a valid scorsh message
+				err = yaml.Unmarshal([]byte(commit_msg), &tags)
 
-			// Check if is the comment contains a valid scorsh message
-			err = yaml.Unmarshal([]byte(commit_msg), &tags)
+				if err != nil {
+					// no scorsh message found
+					err = fmt.Errorf("unmarshal error: %s", err)
+				} else {
+					// there is a scorsh message there so....
 
-			if err != nil {
-				// no scorsh message found
-				log.Printf("[worker: %s] no scorsh message found: %s", err)
-			} else {
-				// there is a scorsh message there so....
+					// 1) get the list of all the keyrings which verify the message
+					valid_keys := get_valid_keys(commit, &(w.Keys))
+					debug.log("[worker: %s] validated keyrings on commit: %s\n", w.Name, valid_keys)
 
-				// 1) get the list of all the keyrings which verify the message
-				valid_keys := get_valid_keys(commit, &(w.Keys))
-				debug.log("[worker: %s] validated keyrings on commit: %s\n", w.Name, valid_keys)
+					// 2) then for each tag in the message
+					for _, t := range tags.Tags {
+						// a) check that the tag is among those accepted by the worker
+						tag_cfg, good_tag := find_tag_config(t.Tag, w)
+						debug.log("[worker: %s] good_tag: %s\n", w.Name, good_tag)
 
-				// 2) then for each tag in the message
-				for _, t := range tags.Tags {
-					// a) check that the tag is among those accepted by the worker
-					tag_cfg, good_tag := find_tag_config(t.Tag, w)
-					debug.log("[worker: %s] good_tag: %s\n", w.Name, good_tag)
+						if !good_tag {
+							debug.log("[worker: %s] unsupported tag: %s\n", w.Name, t.Tag)
+							continue
+						}
 
-					if !good_tag {
-						debug.log("[worker: %s] unsupported tag: %s\n", w.Name, t.Tag)
-						continue
-					}
+						// b) check that at least one of the accepted tag keyrings
+						// is in valid_keys
+						good_keys := intersect_keys(w.TagKeys[t.Tag], valid_keys) != nil
+						debug.log("[worker: %s] good_keys: %s\n", w.Name, good_keys)
 
-					// b) check that at least one of the accepted tag keyrings
-					// is in valid_keys
-					good_keys := intersect_keys(w.TagKeys[t.Tag], valid_keys) != nil
-					debug.log("[worker: %s] good_keys: %s\n", w.Name, good_keys)
+						if !good_keys {
+							debug.log("[worker: %s] no matching keys for tag: %s\n", w.Name, t.Tag)
+							continue
+						}
 
-					if !good_keys {
-						debug.log("[worker: %s] no matching keys for tag: %s\n", w.Name, t.Tag)
-						continue
-					}
-
-					// c) If everything is OK, execute the tag
-					if good_tag && good_keys {
-						env := set_environment(&msg, t.Tag, get_author_email(commit), get_committer_email(commit))
-						errs := exec_tag(tag_cfg, t.Args, env)
-						debug.log("[worker: %s] errors in tag %s: %s\n", w.Name, t.Tag, errs)
+						// c) If everything is OK, execute the tag
+						if good_tag && good_keys {
+							env := set_environment(&msg, t.Tag, get_author_email(commit), get_committer_email(commit))
+							errs := exec_tag(tag_cfg, t.Args, env)
+							debug.log("[worker: %s] errors in tag %s: %s\n", w.Name, t.Tag, errs)
+						}
 					}
 				}
+			} else {
+				log.Printf("[worker: %s] error parsing commit %s: %s", w.Name, cur_commit.Id().String(), err)
 			}
-
+			// FIXME: ADD ALL THE PARENTS TO THE QUEUE OF COMMITS
 			cur_commit = commit.Parent(0)
 		} else {
 			fmt.Printf("Commit %x not found!\n", cur_commit.Id())

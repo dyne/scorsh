@@ -38,14 +38,14 @@ type SCORSHtag_cfg struct {
 
 // Configuration of a worker
 type SCORSHworker_cfg struct {
-	Name     string          `yaml:"w_name"`
-	Repos    []string        `yaml:"w_repos"`
-	Folder   string          `yaml:"w_folder"`
-	Logfile  string          `yaml:"w_logfile"`
-	Tagfile  string          `yaml:"w_tagfile"`
-	Keyrings []string        `yaml:"w_keyrings"`
-	Tags     []SCORSHtag_cfg `yaml:"w_tags"`
-	TagKeys  map[string]map[string]bool
+	Name    string   `yaml:"w_name"`
+	Repos   []string `yaml:"w_repos"`
+	Folder  string   `yaml:"w_folder"`
+	Logfile string   `yaml:"w_logfile"`
+	Tagfile string   `yaml:"w_tagfile"`
+	//	Keyrings []string        `yaml:"w_keyrings"`
+	Tags    []SCORSHtag_cfg `yaml:"w_tags"`
+	TagKeys map[string]map[string]bool
 }
 
 // State of a worker
@@ -136,7 +136,7 @@ func (w *SCORSHworker) String() string {
 	fmt.Fprintf(&buff, "Folder: %s\n", w.Folder)
 	fmt.Fprintf(&buff, "Logfile: %s\n", w.Logfile)
 	fmt.Fprintf(&buff, "Tagfile: %s\n", w.Tagfile)
-	fmt.Fprintf(&buff, "Keyrings: %s\n", w.Keyrings)
+	//	fmt.Fprintf(&buff, "Keyrings: %s\n", w.Keyrings)
 
 	return buff.String()
 }
