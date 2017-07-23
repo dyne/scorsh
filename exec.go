@@ -41,8 +41,10 @@ func check_hash(file, hash string) error {
 		return err
 	}
 	hash_bytes := sha256.Sum256(data)
-	computed_hash := string(hash_bytes[:sha256.Size])
-	if string(computed_hash) == hash {
+	computed_hash := fmt.Sprintf("%x", string(hash_bytes[:sha256.Size]))
+	debug.log("[check_hash] configured hash string: %s\n", hash)
+	debug.log("[check_hash] computed hash string: %s\n", computed_hash)
+	if computed_hash == hash {
 		return nil
 	} else {
 		return fmt.Errorf("WARNING!!! HASH MISMATCH FOR %s", file)
@@ -74,6 +76,7 @@ func exec_tag(tag *SCORSHtag_cfg, args []string, env []string) []error {
 				// if the hash does not match, abort the command
 				if err != nil {
 					log.Printf("[tag: %s] %s -- aborting command\n", tag.Name, err)
+					ret = append(ret, err)
 					continue
 				} else {
 					// finally, the command can be executed
