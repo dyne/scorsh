@@ -86,7 +86,7 @@ func (w *SCORSHworker) LoadTags() error {
 }
 
 // FIXME--- still needs some work...
-func Worker(w *SCORSHworker) {
+func runWorker(w *SCORSHworker) {
 
 	var msg SCORSHmsg
 
@@ -101,7 +101,7 @@ func Worker(w *SCORSHworker) {
 		case msg = <-w.MsgChan:
 			debug.log("[worker: %s] received message %s\n", w.Name, msg.Id)
 			// process message
-			err := walk_commits(msg, w)
+			err := walkCommits(msg, w)
 			if err != nil {
 				log.Printf("[worker: %s] error in walk_commits: %s", err)
 			}
@@ -113,7 +113,7 @@ func Worker(w *SCORSHworker) {
 
 // StartWorkers starts all the workers specified in a given
 // configuration and fills in the SCORSHmaster struct
-func StartWorkers(master *SCORSHmaster) error {
+func startWorkers(master *SCORSHmaster) error {
 
 	num_workers := len(master.Workers)
 
@@ -146,7 +146,7 @@ func StartWorkers(master *SCORSHmaster) error {
 		for _, repo_name := range worker.Repos {
 			master.Repos[repo_name] = append(master.Repos[repo_name], worker)
 		}
-		go Worker(worker)
+		go runWorker(worker)
 		<-master.StatusChan
 	}
 	return nil

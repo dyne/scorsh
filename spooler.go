@@ -11,9 +11,9 @@ import (
 )
 
 // parse a request file and return a SCORSHmessage
-func parse_request(fname string, msg *SCORSHmsg) error {
+func parseRequest(fname string, msg *SCORSHmsg) error {
 
-	debug.log("[parse_request] message at start: %s\n", msg)
+	debug.log("[parseRequest] message at start: %s\n", msg)
 
 	data, err := ioutil.ReadFile(fname)
 	if err != nil {
@@ -21,15 +21,15 @@ func parse_request(fname string, msg *SCORSHmsg) error {
 		return SCORSHerr(SCORSH_ERR_NO_FILE)
 	}
 
-	debug.log("[parse_request] file contains: \n%s\n", data)
+	debug.log("[parseRequest] file contains: \n%s\n", data)
 
-	debug.log("[parse_request] reading message from file: %s\n", fname)
+	debug.log("[parseRequest] reading message from file: %s\n", fname)
 
 	err = yaml.Unmarshal([]byte(data), msg)
 	if err != nil {
 		return fmt.Errorf("Error parsing message: %s", err)
 	}
-	debug.log("[parse_request] got message: %s\n", msg)
+	debug.log("[parseRequest] got message: %s\n", msg)
 	return nil
 }
 
@@ -46,7 +46,7 @@ func spooler(watcher *fsnotify.Watcher, master chan SCORSHmsg) {
 			if event.Op == fsnotify.Write {
 				var msg SCORSHmsg
 				debug.log("[spooler] new file %s detected\n", event.Name)
-				err := parse_request(event.Name, &msg)
+				err := parseRequest(event.Name, &msg)
 				if err != nil {
 					log.Printf("Invalid packet received. [%s]\n", err)
 				}
@@ -71,7 +71,7 @@ func spooler(watcher *fsnotify.Watcher, master chan SCORSHmsg) {
 	}
 }
 
-func StartSpooler(master *SCORSHmaster) error {
+func startSpooler(master *SCORSHmaster) error {
 
 	watcher, err := fsnotify.NewWatcher()
 

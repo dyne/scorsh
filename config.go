@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
@@ -11,16 +10,14 @@ import (
 
 // Read a configuration from fname or die
 
-func ReadGlobalConfig(fname string) *SCORSHmaster {
+func readGlobalConfig(fname string) *SCORSHmaster {
 
 	data, err := ioutil.ReadFile(fname)
 	if err != nil {
 		log.Fatal("Error while reading file: ", err)
 	}
 
-	var cfg *SCORSHmaster
-
-	cfg = new(SCORSHmaster)
+	var cfg = new(SCORSHmaster)
 
 	// Unmarshal the YAML configuration file into a SCORSHcfg structure
 	err = yaml.Unmarshal(data, cfg)
@@ -28,7 +25,7 @@ func ReadGlobalConfig(fname string) *SCORSHmaster {
 		log.Fatal("Error while reading configuration: ", err)
 	}
 
-	fmt.Printf("%s", cfg)
+	//fmt.Printf("%s", cfg)
 
 	if cfg.Logfile != "" {
 		f, err := os.OpenFile(cfg.Logfile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0600)

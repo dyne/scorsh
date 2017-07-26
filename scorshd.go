@@ -20,31 +20,31 @@ func (d debugging) log(format string, args ...interface{}) {
 
 ///////////
 
-var conf_file = flag.String("c", "./scorsh.cfg", "Configuration file for SCORSH")
+var confFile = flag.String("c", "./scorsh.cfg", "Configuration file for SCORSH")
 
 func SCORSHerr(err int) error {
 
-	var err_str string
+	var errStr string
 
 	switch err {
 	case SCORSH_ERR_NO_FILE:
-		err_str = "Invalid file name"
+		errStr = "Invalid file name"
 	case SCORSH_ERR_KEYRING:
-		err_str = "Invalid keyring"
+		errStr = "Invalid keyring"
 	case SCORSH_ERR_NO_REPO:
-		err_str = "Invalid repository"
+		errStr = "Invalid repository"
 	case SCORSH_ERR_NO_COMMIT:
-		err_str = "Invalid commit ID"
+		errStr = "Invalid commit ID"
 	case SCORSH_ERR_SIGNATURE:
-		err_str = "Invalid signature"
+		errStr = "Invalid signature"
 	default:
-		err_str = "Generic Error"
+		errStr = "Generic Error"
 	}
-	return fmt.Errorf("%s", err_str)
+	return fmt.Errorf("%s", errStr)
 
 }
 
-func FindMatchingWorkers(master *SCORSHmaster, msg *SCORSHmsg) []*SCORSHworker {
+func findMatchingWorkers(master *SCORSHmaster, msg *SCORSHmsg) []*SCORSHworker {
 
 	var ret []*SCORSHworker
 
@@ -57,13 +57,9 @@ func FindMatchingWorkers(master *SCORSHmaster, msg *SCORSHmsg) []*SCORSHworker {
 	return ret
 }
 
-func Master(master *SCORSHmaster) {
+func runMaster(master *SCORSHmaster) {
 
 	// master main loop:
-
-	var matching_workers []*SCORSHworker
-
-	matching_workers = make([]*SCORSHworker, len(master.Workers))
 
 	log.Println("[master] Master started ")
 	debug.log("[master] StatusChan: %s\n", master.StatusChan)
@@ -71,48 +67,48 @@ func Master(master *SCORSHmaster) {
 	for {
 		debug.log("[master] Receive loop...\n")
 		select {
-		case push_msg := <-master.Spooler:
+		case pushMsg := <-master.Spooler:
 			// here we manage the stuff we receive from the spooler
-			debug.log("[master] received message: %s\n", push_msg)
+			debug.log("[master] received message: %s\n", pushMsg)
 			// - lookup the repos map for matching workers
-			matching_workers = FindMatchingWorkers(master, &push_msg)
-			debug.log("[master] matching workers: \n%s\n", matching_workers)
+			matchingWorkers := findMatchingWorkers(master, &pushMsg)
+			debug.log("[master] matching workers: \n%s\n", matchingWorkers)
 
 			// add the message to WorkingMsg, if it's not a duplicate!
-			if _, ok := master.WorkingMsg[push_msg.Id]; ok {
-				log.Printf("[master] detected duplicate message %s \n", push_msg.Id)
+			if _, ok := master.WorkingMsg[pushMsg.Id]; ok {
+				log.Printf("[master] detected duplicate message %s \n", pushMsg.Id)
 			} else {
-				master.WorkingMsg[push_msg.Id] = 0
+				master.WorkingMsg[pushMsg.Id] = 0
 				// - dispatch the message to all the matching workers
-				for _, w := range matching_workers {
+				for _, w := range matchingWorkers {
 					debug.log("[master] sending msg to worker: %s\n", w.Name)
 					// send the message to the worker
-					w.MsgChan <- push_msg
+					w.MsgChan <- pushMsg
 					// increase the counter associated to the message
-					master.WorkingMsg[push_msg.Id] += 1
-					debug.log("[master] now WorkingMsg[%s] is: %d\n", push_msg.Id, master.WorkingMsg[push_msg.Id])
+					master.WorkingMsg[pushMsg.Id]++
+					debug.log("[master] now WorkingMsg[%s] is: %d\n", pushMsg.Id, master.WorkingMsg[pushMsg.Id])
 				}
 			}
-		case done_msg := <-master.StatusChan:
+		case doneMsg := <-master.StatusChan:
 			// Here we manage a status message from a worker
-			debug.log("[master] received message from StatusChan: %s\n", done_msg)
-			if _, ok := master.WorkingMsg[done_msg.Id]; ok && master.WorkingMsg[done_msg.Id] > 0 {
-				master.WorkingMsg[done_msg.Id] -= 1
-				if master.WorkingMsg[done_msg.Id] == 0 {
-					delete(master.WorkingMsg, done_msg.Id)
-					master.Spooler <- done_msg
+			debug.log("[master] received message from StatusChan: %s\n", doneMsg)
+			if _, ok := master.WorkingMsg[doneMsg.Id]; ok && master.WorkingMsg[doneMsg.Id] > 0 {
+				master.WorkingMsg[doneMsg.Id]--
+				if master.WorkingMsg[doneMsg.Id] == 0 {
+					delete(master.WorkingMsg, doneMsg.Id)
+					master.Spooler <- doneMsg
 				}
 			} else {
-				log.Printf("[master] received completion event for non-existing message name: %s\n", done_msg.Id)
+				log.Printf("[master] received completion event for non-existing message name: %s\n", doneMsg.Id)
 			}
 		}
 	}
 	debug.log("[master] Exiting the for loop, for some mysterious reason...\n")
 }
 
-func InitMaster() *SCORSHmaster {
+func initMaster() *SCORSHmaster {
 
-	master := ReadGlobalConfig(*conf_file)
+	master := readGlobalConfig(*confFile)
 
 	master.Repos = make(map[string][]*SCORSHworker)
 	master.WorkingMsg = make(map[string]int)
@@ -123,15 +119,15 @@ func InitMaster() *SCORSHmaster {
 
 	debug.log("[InitMaster] StatusChan: %s\n", master.StatusChan)
 
-	err_workers := StartWorkers(master)
-	if err_workers != nil {
-		log.Fatal("Error starting workers: ", err_workers)
+	errWorkers := startWorkers(master)
+	if errWorkers != nil {
+		log.Fatal("Error starting workers: ", errWorkers)
 	} else {
 		log.Println("Workers started correctly")
 	}
-	err_spooler := StartSpooler(master)
-	if err_spooler != nil {
-		log.Fatal("Error starting spooler: ", err_spooler)
+	errSpooler := startSpooler(master)
+	if errSpooler != nil {
+		log.Fatal("Error starting spooler: ", errSpooler)
 	}
 	return master
 }
@@ -142,9 +138,9 @@ func main() {
 
 	flag.Parse()
 
-	master := InitMaster()
+	master := initMaster()
 
-	go Master(master)
+	go runMaster(master)
 
 	// wait indefinitely -- we should implement signal handling...
 	<-done
