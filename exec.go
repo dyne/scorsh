@@ -26,7 +26,7 @@ func execLocalFile(cmdURL *url.URL, args, env []string) error {
 			buff := bufio.NewScanner(stdout)
 			log.Printf("[%s - stout follows: ]\n", cmd.Path)
 			for buff.Scan() {
-				log.Printf(buff.Text()) // write each line to your log, or anything you need
+				log.Print(buff.Text()) // write each line to your log, or anything you need
 			}
 			err = cmd.Wait()
 		}
@@ -97,7 +97,7 @@ func setEnvironment(msg *SCORSHmsg, tag, author, committer string) []string {
 	env = append(env, fmt.Sprintf("SCORSH_BRANCH=%s", msg.Branch))
 	env = append(env, fmt.Sprintf("SCORSH_OLDREV=%s", msg.OldRev))
 	env = append(env, fmt.Sprintf("SCORSH_NEWREV=%s", msg.NewRev))
-	env = append(env, fmt.Sprintf("SCORSH_ID=%s", msg.Id))
+	env = append(env, fmt.Sprintf("SCORSH_ID=%s", msg.ID))
 	env = append(env, fmt.Sprintf("SCORSH_TAG=%s", tag))
 	env = append(env, fmt.Sprintf("SCORSH_AUTHOR=%s", author))
 	env = append(env, fmt.Sprintf("SCORSH_COMMITTER=%s", committer))

@@ -6,6 +6,7 @@ import (
 	"golang.org/x/crypto/openpgp"
 )
 
+// error constants
 const (
 	SCORSH_ERR_NO_FILE = -(1 << iota)
 	SCORSH_ERR_KEYRING
@@ -14,10 +15,10 @@ const (
 	SCORSH_ERR_SIGNATURE
 )
 
-// the SCORSHmsg type represents messages received from the spool and
+// SCORSHmsg type represents messages received from the spool and
 // sent to workers
 type SCORSHmsg struct {
-	Id     string `yaml:"m_id"`
+	ID     string `yaml:"m_id"`
 	Repo   string `yaml:"m_repo"`
 	Branch string `yaml:"m_branch"`
 	OldRev string `yaml:"m_oldrev"`
@@ -25,18 +26,20 @@ type SCORSHmsg struct {
 	Path   string
 }
 
+// SCORSHcmd represents commands configured on the server side
 type SCORSHcmd struct {
 	URL  string `yaml:"c_url"`
 	Hash string `yaml:"c_hash"`
 }
 
+// SCORSHtagCfg represents tags configured on the server side
 type SCORSHtagCfg struct {
 	Name     string      `yaml:"t_name"`
 	Keyrings []string    `yaml:"t_keyrings"`
 	Commands []SCORSHcmd `yaml:"t_commands"`
 }
 
-// Configuration of a worker
+// SCORSHworkerCfg represents the static configuration of a worker
 type SCORSHworkerCfg struct {
 	Name    string   `yaml:"w_name"`
 	Repos   []string `yaml:"w_repos"`
@@ -48,21 +51,20 @@ type SCORSHworkerCfg struct {
 	TagKeys map[string]map[string]bool
 }
 
-// State of a worker
+// SCORSHworkerState represents the runtime state of a worker
 type SCORSHworkerState struct {
 	Keys       map[string]openpgp.KeyRing
 	MsgChan    chan SCORSHmsg
 	StatusChan chan SCORSHmsg
 }
 
-// The type SCORSHworker represents the configuration and state of a
-// worker
+// SCORSHworker represents the configuration and state of a worker
 type SCORSHworker struct {
 	SCORSHworkerCfg `yaml:",inline"`
 	SCORSHworkerState
 }
 
-// Configuration of the master
+// SCORSHmasterCfg represents the static configuration of the master
 type SCORSHmasterCfg struct {
 	Spooldir  string         `yaml:"s_spooldir"`
 	Logfile   string         `yaml:"s_logfile"`
@@ -70,7 +72,7 @@ type SCORSHmasterCfg struct {
 	Workers   []SCORSHworker `yaml:"s_workers"`
 }
 
-// State of the master
+// SCORSHmasterState represents the runtime state of the master
 type SCORSHmasterState struct {
 	Spooler    chan SCORSHmsg
 	StatusChan chan SCORSHmsg
@@ -78,20 +80,19 @@ type SCORSHmasterState struct {
 	WorkingMsg map[string]int
 }
 
-// The type SCORSHmaster represents the configuration and state of the
-// master
+// SCORSHmaster represents the configuration and state of the master
 type SCORSHmaster struct {
 	SCORSHmasterCfg `yaml:",inline"`
 	SCORSHmasterState
 }
 
-// client commands
-
+// SCORSHtag is the type of commands sent by clients
 type SCORSHtag struct {
 	Tag  string   `yaml:"s_tag"`
 	Args []string `yaml:"s_args"`
 }
 
+// SCORSHclientMsg is the list of commands sent by a client
 type SCORSHclientMsg struct {
 	Tags []SCORSHtag `yaml:"scorsh"`
 }
@@ -117,7 +118,7 @@ func (cfg *SCORSHmaster) String() string {
 func (msg *SCORSHmsg) String() string {
 
 	var buff bytes.Buffer
-	fmt.Fprintf(&buff, "Id: %s\n", msg.Id)
+	fmt.Fprintf(&buff, "Id: %s\n", msg.ID)
 	fmt.Fprintf(&buff, "Repo: %s\n", msg.Repo)
 	fmt.Fprintf(&buff, "Branch: %s\n", msg.Branch)
 	fmt.Fprintf(&buff, "OldRev: %s\n", msg.OldRev)

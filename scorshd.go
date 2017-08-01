@@ -22,6 +22,8 @@ func (d debugging) log(format string, args ...interface{}) {
 
 var confFile = flag.String("c", "./scorsh.cfg", "Configuration file for SCORSH")
 
+// SCORSHerr converts numeric error values in the corresponding
+// description string
 func SCORSHerr(err int) error {
 
 	var errStr string
@@ -75,31 +77,31 @@ func runMaster(master *SCORSHmaster) {
 			debug.log("[master] matching workers: \n%s\n", matchingWorkers)
 
 			// add the message to WorkingMsg, if it's not a duplicate!
-			if _, ok := master.WorkingMsg[pushMsg.Id]; ok {
-				log.Printf("[master] detected duplicate message %s \n", pushMsg.Id)
+			if _, ok := master.WorkingMsg[pushMsg.ID]; ok {
+				log.Printf("[master] detected duplicate message %s \n", pushMsg.ID)
 			} else {
-				master.WorkingMsg[pushMsg.Id] = 0
+				master.WorkingMsg[pushMsg.ID] = 0
 				// - dispatch the message to all the matching workers
 				for _, w := range matchingWorkers {
 					debug.log("[master] sending msg to worker: %s\n", w.Name)
 					// send the message to the worker
 					w.MsgChan <- pushMsg
 					// increase the counter associated to the message
-					master.WorkingMsg[pushMsg.Id]++
-					debug.log("[master] now WorkingMsg[%s] is: %d\n", pushMsg.Id, master.WorkingMsg[pushMsg.Id])
+					master.WorkingMsg[pushMsg.ID]++
+					debug.log("[master] now WorkingMsg[%s] is: %d\n", pushMsg.ID, master.WorkingMsg[pushMsg.ID])
 				}
 			}
 		case doneMsg := <-master.StatusChan:
 			// Here we manage a status message from a worker
 			debug.log("[master] received message from StatusChan: %s\n", doneMsg)
-			if _, ok := master.WorkingMsg[doneMsg.Id]; ok && master.WorkingMsg[doneMsg.Id] > 0 {
-				master.WorkingMsg[doneMsg.Id]--
-				if master.WorkingMsg[doneMsg.Id] == 0 {
-					delete(master.WorkingMsg, doneMsg.Id)
+			if _, ok := master.WorkingMsg[doneMsg.ID]; ok && master.WorkingMsg[doneMsg.ID] > 0 {
+				master.WorkingMsg[doneMsg.ID]--
+				if master.WorkingMsg[doneMsg.ID] == 0 {
+					delete(master.WorkingMsg, doneMsg.ID)
 					master.Spooler <- doneMsg
 				}
 			} else {
-				log.Printf("[master] received completion event for non-existing message name: %s\n", doneMsg.Id)
+				log.Printf("[master] received completion event for non-existing message name: %s\n", doneMsg.ID)
 			}
 		}
 	}

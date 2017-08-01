@@ -11,23 +11,27 @@ import (
 	"strings"
 )
 
-func (worker *SCORSHworker) Matches(repo, branch string) bool {
+// Matches returns true if the configured repo:branch of the worker
+// matches the repo and branch provided as arguments
+func (w *SCORSHworker) Matches(repo, branch string) bool {
 
-	for _, r := range worker.Repos {
+	for _, r := range w.Repos {
 		parts := strings.SplitN(r, ":", 2)
-		repo_pattern := parts[0]
-		branch_pattern := parts[1]
-		repo_match, _ := regexp.MatchString(repo_pattern, repo)
-		branch_match, _ := regexp.MatchString(branch_pattern, branch)
-		debug.log("[worker.Matches] repo_match: %s\n", repo_match)
-		debug.log("[worker.Matches] branch_match: %s\n", branch_match)
-		if repo_match && branch_match {
+		repoPattern := parts[0]
+		branchPattern := parts[1]
+		repoMatch, _ := regexp.MatchString(repoPattern, repo)
+		branchMatch, _ := regexp.MatchString(branchPattern, branch)
+		debug.log("[worker.Matches] repo_match: %s\n", repoMatch)
+		debug.log("[worker.Matches] branch_match: %s\n", branchMatch)
+		if repoMatch && branchMatch {
 			return true
 		}
 	}
 	return false
 }
 
+// LoadKeyrings loads the configured keyrings for all the commands
+// managed by the worker
 func (w *SCORSHworker) LoadKeyrings() error {
 
 	w.Keys = make(map[string]openpgp.KeyRing)
@@ -43,39 +47,39 @@ func (w *SCORSHworker) LoadKeyrings() error {
 				w.TagKeys[t.Name][keyring] = true
 				continue
 			}
-			k_file := fmt.Sprintf("%s/%s", w.Folder, keyring)
-			debug.log("[worker: %s] Trying to open keyring at %s\n", w.Name, k_file)
-			f, err_file := os.Open(k_file)
-			if err_file != nil {
-				log.Printf("[worker] cannot open keyring: %s", err_file)
-				f.Close()
+			kfile := fmt.Sprintf("%s/%s", w.Folder, keyring)
+			debug.log("[worker: %s] Trying to open keyring at %s\n", w.Name, kfile)
+			f, errFile := os.Open(kfile)
+			if errFile != nil {
+				log.Printf("[worker] cannot open keyring: %s", errFile)
+				_ = f.Close()
 			}
 
 			// load the keyring
-			kr, err_key := openpgp.ReadArmoredKeyRing(f)
+			kr, errKey := openpgp.ReadArmoredKeyRing(f)
 
-			if err_key != nil {
-				log.Printf("[worker] cannot load keyring: %s", err_key)
-				f.Close()
+			if errKey != nil {
+				log.Printf("[worker] cannot load keyring: %s", errKey)
+				_ = f.Close()
 				//return fmt.Errorf("Unable to load keyring: ", err_key)
 			}
 			w.Keys[keyring] = kr
 			w.TagKeys[t.Name][keyring] = true
-			f.Close()
+			_ = f.Close()
 		}
 	}
 	return nil
 }
 
-// Still to be implemented
+// LoadTags loads all the configured commands for the worker
 func (w *SCORSHworker) LoadTags() error {
 
-	w_tags, err := ioutil.ReadFile(w.Tagfile)
+	wTags, err := ioutil.ReadFile(w.Tagfile)
 	if err != nil {
 		return fmt.Errorf("Cannot read worker config: %s", err)
 	}
 
-	err = yaml.Unmarshal(w_tags, w)
+	err = yaml.Unmarshal(wTags, w)
 	//err = yaml.Unmarshal(w_tags, tags)
 
 	if err != nil {
@@ -85,7 +89,7 @@ func (w *SCORSHworker) LoadTags() error {
 	return nil
 }
 
-// FIXME--- still needs some work...
+//
 func runWorker(w *SCORSHworker) {
 
 	var msg SCORSHmsg
@@ -99,7 +103,7 @@ func runWorker(w *SCORSHworker) {
 	for {
 		select {
 		case msg = <-w.MsgChan:
-			debug.log("[worker: %s] received message %s\n", w.Name, msg.Id)
+			debug.log("[worker: %s] received message %s\n", w.Name, msg.ID)
 			// process message
 			err := walkCommits(msg, w)
 			if err != nil {
@@ -115,13 +119,13 @@ func runWorker(w *SCORSHworker) {
 // configuration and fills in the SCORSHmaster struct
 func startWorkers(master *SCORSHmaster) error {
 
-	num_workers := len(master.Workers)
+	numWorkers := len(master.Workers)
 
 	// We should now start each worker
 
-	log.Printf("num_workers: %d\n", num_workers)
+	log.Printf("num_workers: %d\n", numWorkers)
 
-	for w := 0; w < num_workers; w++ {
+	for w := 0; w < numWorkers; w++ {
 
 		worker := &(master.Workers[w])
 		// Set the Status and Msg channels
@@ -132,19 +136,19 @@ func startWorkers(master *SCORSHmaster) error {
 		err := worker.LoadTags()
 		if err != nil {
 			close(worker.MsgChan)
-			return fmt.Errorf("[Starting worker: %s] Unable to load tags: %s\n", worker.Name, err)
+			return fmt.Errorf("[Starting worker: %s] Unable to load tags: %s", worker.Name, err)
 		}
 
 		// Load worker keyrings -- this must be called *after* LoadTags!!!!
 		err = worker.LoadKeyrings()
 		if err != nil {
 			close(worker.MsgChan)
-			return fmt.Errorf("[Starting worker: %s] Unable to load keyrings: %s\n", worker.Name, err)
+			return fmt.Errorf("[Starting worker: %s] Unable to load keyrings: %s", worker.Name, err)
 		}
 
 		// Add the repos definitions to the map master.Repos
-		for _, repo_name := range worker.Repos {
-			master.Repos[repo_name] = append(master.Repos[repo_name], worker)
+		for _, repoName := range worker.Repos {
+			master.Repos[repoName] = append(master.Repos[repoName], worker)
 		}
 		go runWorker(worker)
 		<-master.StatusChan

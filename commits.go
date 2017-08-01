@@ -11,18 +11,15 @@ import (
 	//	"log"
 )
 
-func commitToString(commit *git.Commit) string {
-
-	var ret string
-
-	ret += fmt.Sprintf("type: %s\n", commit.Type())
-	ret += fmt.Sprintf("Id: %s\n", commit.Id())
-	ret += fmt.Sprintf("Author: %s\n", commit.Author())
-	ret += fmt.Sprintf("Message: %s\n", commit.Message())
-	ret += fmt.Sprintf("Parent-count: %d\n", commit.ParentCount())
-
-	return ret
-}
+// func commitToString(commit *git.Commit) string {
+// 	var ret string
+// 	ret += fmt.Sprintf("type: %s\n", commit.Type())
+// 	ret += fmt.Sprintf("Id: %s\n", commit.Id())
+// 	ret += fmt.Sprintf("Author: %s\n", commit.Author())
+// 	ret += fmt.Sprintf("Message: %s\n", commit.Message())
+// 	ret += fmt.Sprintf("Parent-count: %d\n", commit.ParentCount())
+// 	return ret
+// }
 
 // FIXME: RETURN THE ENTITY PROVIDED BY THE CHECK, OR nil
 func checkSignature(commit *git.Commit, keyring *openpgp.KeyRing) (signature, signed string, err error) {
@@ -130,7 +127,7 @@ func walkCommits(msg SCORSHmsg, w *SCORSHworker) error {
 		return SCORSHerr(SCORSH_ERR_NO_REPO)
 	}
 
-	oldRevOid, err := git.NewOid(oldRev)
+	oldRevOid, _ := git.NewOid(oldRev)
 
 	oldrevCommit, err := repo.LookupCommit(oldRevOid)
 	if err != nil {
@@ -138,7 +135,7 @@ func walkCommits(msg SCORSHmsg, w *SCORSHworker) error {
 		return SCORSHerr(SCORSH_ERR_NO_COMMIT)
 	}
 
-	newRevOid, err := git.NewOid(newRev)
+	newRevOid, _ := git.NewOid(newRev)
 
 	newrevCommit, err := repo.LookupCommit(newRevOid)
 	if err != nil {

@@ -76,12 +76,12 @@ func startSpooler(master *SCORSHmaster) error {
 	watcher, err := fsnotify.NewWatcher()
 
 	if err != nil {
-		return fmt.Errorf("Error creating watcher: %s\n", err)
+		return fmt.Errorf("error creating watcher: %s", err)
 	}
 
 	err = watcher.Add(master.Spooldir)
 	if err != nil {
-		return fmt.Errorf("Error adding folder: %s\n", err)
+		return fmt.Errorf("error adding folder: %s", err)
 	}
 
 	go spooler(watcher, master.Spooler)
