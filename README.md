@@ -8,7 +8,6 @@ signed git commits.
 
 **scorsh** is written in Go. 
 
-**This is still work-in-progress, not ready to be used yet**
 
 ## WTF
 
@@ -92,3 +91,13 @@ And finally build its binary:
 ```
 make
 ```
+
+
+## License
+
+**scorsh** is Copyright (2017) by Vincenzo "KatolaZ" Nicosia.
+
+**scorsh** is free software. You can use, modify, and redistribute it
+  under the terms of the GNU Affero General Public Licence, version 3
+  of the Licence or, at your option, any later version. Please see
+  LICENSE.md for details.
