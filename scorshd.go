@@ -46,9 +46,9 @@ func SCORSHerr(err int) error {
 
 }
 
-func findMatchingWorkers(master *SCORSHmaster, msg *SCORSHmsg) []*SCORSHworker {
+func findMatchingWorkers(master *master, msg *spoolMsg) []*worker {
 
-	var ret []*SCORSHworker
+	var ret []*worker
 
 	for idx, w := range master.Workers {
 		if w.Matches(msg.Repo, msg.Branch) {
@@ -59,7 +59,7 @@ func findMatchingWorkers(master *SCORSHmaster, msg *SCORSHmsg) []*SCORSHworker {
 	return ret
 }
 
-func runMaster(master *SCORSHmaster) {
+func runMaster(master *master) {
 
 	// master main loop:
 
@@ -108,16 +108,16 @@ func runMaster(master *SCORSHmaster) {
 	debug.log("[master] Exiting the for loop, for some mysterious reason...\n")
 }
 
-func initMaster() *SCORSHmaster {
+func initMaster() *master {
 
 	master := readGlobalConfig(*confFile)
 
-	master.Repos = make(map[string][]*SCORSHworker)
+	master.Repos = make(map[string][]*worker)
 	master.WorkingMsg = make(map[string]int)
 	// This is the channel on which we receive acks from workers
-	master.StatusChan = make(chan SCORSHmsg)
+	master.StatusChan = make(chan spoolMsg)
 	// This is the channel on which we exchange messages with the spooler
-	master.Spooler = make(chan SCORSHmsg)
+	master.Spooler = make(chan spoolMsg)
 
 	debug.log("[InitMaster] StatusChan: %s\n", master.StatusChan)
 

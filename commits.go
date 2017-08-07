@@ -41,8 +41,9 @@ func checkSignature(commit *git.Commit, keyring *openpgp.KeyRing) (signature, si
 	return "", "", err
 }
 
-func findScorshMessage(commit *git.Commit) (string, error) {
+func findScorshMessage(commit *git.Commit) (*clientMsg, error) {
 
+	var commands = new(clientMsg)
 	sep := "---\n"
 
 	msg := commit.RawMessage()
@@ -52,9 +53,20 @@ func findScorshMessage(commit *git.Commit) (string, error) {
 	idx := strings.Index(msg, sep)
 
 	if idx < 0 {
-		return "", fmt.Errorf("no SCORSH message found")
+		return nil, fmt.Errorf("no SCORSH message found")
 	}
-	return msg[idx:], nil
+
+	err := yaml.Unmarshal([]byte(msg[idx:]), &commands)
+
+	if err != nil {
+		// no scorsh message found
+		err = fmt.Errorf("unmarshal error: %s", err)
+		commands = nil
+	} else {
+		err = nil
+	}
+
+	return commands, nil
 }
 
 // return a list of keyring names which verify the signature of a given commit
@@ -84,7 +96,7 @@ func intersectKeys(ref map[string]bool, keys []string) []string {
 	return ret
 }
 
-func findTagConfig(tagName string, w *SCORSHworker) (*SCORSHtagCfg, bool) {
+func findTagConfig(tagName string, w *worker) (*commandCfg, bool) {
 
 	for _, c := range w.Tags {
 		if c.Name == tagName {
@@ -107,12 +119,11 @@ func getCommitterEmail(c *git.Commit) string {
 
 }
 
-// walk_commits traverses all the commits between two references,
+// walkCommits traverses all the commits between two references,
 // looking for scorsh commands, and tries to execute those if found
-func walkCommits(msg SCORSHmsg, w *SCORSHworker) error {
+func walkCommits(msg spoolMsg, w *worker) error {
 
-	var tags SCORSHclientMsg
-	var commitMsg string
+	var commands *clientMsg
 
 	debug.log("[worker: %s] Inside walkCommits\n", w.Name)
 
@@ -151,53 +162,44 @@ func walkCommits(msg SCORSHmsg, w *SCORSHworker) error {
 		commit, err := repo.LookupCommit(curCommit.Id())
 		if err == nil {
 
-			// We look for scorsh-tags, and if the commit has any, check if
-			// it can be verified by any of the keyrings associated with
-			// that specific scorsh-tag
+			// We look for scorsh-commands, and if the commit has any, check
+			// if it can be verified by any of the keyrings associated with
+			// that specific scorsh-command
 
 			// Check if the commit contains a scorsh command
-			commitMsg, err = findScorshMessage(commit)
+			commands, err = findScorshMessage(commit)
 			if err == nil {
-				// Check if is the comment contains a valid scorsh message
-				err = yaml.Unmarshal([]byte(commitMsg), &tags)
+				//  the commit contains a valid scorsh message
+				// 1) get the list of all the keyrings which verify the message
+				validKeys := getValidKeys(commit, &(w.Keys))
+				debug.log("[worker: %s] validated keyrings on commit: %s\n", w.Name, validKeys)
 
-				if err != nil {
-					// no scorsh message found
-					err = fmt.Errorf("unmarshal error: %s", err)
-				} else {
-					// there is a scorsh message there so....
+				// 2) then for each tag in the message
+				for _, t := range commands.Tags {
+					// a) check that the tag is among those accepted by the worker
+					tagCfg, goodTag := findTagConfig(t.Tag, w)
+					debug.log("[worker: %s] goodTag: %s\n", w.Name, goodTag)
 
-					// 1) get the list of all the keyrings which verify the message
-					validKeys := getValidKeys(commit, &(w.Keys))
-					debug.log("[worker: %s] validated keyrings on commit: %s\n", w.Name, validKeys)
+					if !goodTag {
+						debug.log("[worker: %s] unsupported tag: %s\n", w.Name, t.Tag)
+						continue
+					}
 
-					// 2) then for each tag in the message
-					for _, t := range tags.Tags {
-						// a) check that the tag is among those accepted by the worker
-						tagCfg, goodTag := findTagConfig(t.Tag, w)
-						debug.log("[worker: %s] goodTag: %s\n", w.Name, goodTag)
+					// b) check that at least one of the accepted tag keyrings
+					// is in valid_keys
+					goodKeys := intersectKeys(w.TagKeys[t.Tag], validKeys) != nil
+					debug.log("[worker: %s] goodKeys: %s\n", w.Name, goodKeys)
 
-						if !goodTag {
-							debug.log("[worker: %s] unsupported tag: %s\n", w.Name, t.Tag)
-							continue
-						}
+					if !goodKeys {
+						debug.log("[worker: %s] no matching keys for tag: %s\n", w.Name, t.Tag)
+						continue
+					}
 
-						// b) check that at least one of the accepted tag keyrings
-						// is in valid_keys
-						goodKeys := intersectKeys(w.TagKeys[t.Tag], validKeys) != nil
-						debug.log("[worker: %s] goodKeys: %s\n", w.Name, goodKeys)
-
-						if !goodKeys {
-							debug.log("[worker: %s] no matching keys for tag: %s\n", w.Name, t.Tag)
-							continue
-						}
-
-						// c) If everything is OK, execute the tag
-						if goodTag && goodKeys {
-							env := setEnvironment(&msg, t.Tag, getAuthorEmail(commit), getCommitterEmail(commit))
-							errs := execTag(tagCfg, t.Args, env)
-							debug.log("[worker: %s] errors in tag %s: %s\n", w.Name, t.Tag, errs)
-						}
+					// c) If everything is OK, execute the tag
+					if goodTag && goodKeys {
+						env := setEnvironment(&msg, t.Tag, getAuthorEmail(commit), getCommitterEmail(commit))
+						errs := execTag(tagCfg, t.Args, env)
+						debug.log("[worker: %s] errors in tag %s: %s\n", w.Name, t.Tag, errs)
 					}
 				}
 			} else {

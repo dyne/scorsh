@@ -55,7 +55,7 @@ func execURL(cmdURL *url.URL, args, env []string) error {
 	return nil
 }
 
-func execTag(tag *SCORSHtagCfg, args []string, env []string) []error {
+func execTag(tag *commandCfg, args []string, env []string) []error {
 
 	var ret []error
 
@@ -90,7 +90,7 @@ func execTag(tag *SCORSHtagCfg, args []string, env []string) []error {
 	return ret
 }
 
-func setEnvironment(msg *SCORSHmsg, tag, author, committer string) []string {
+func setEnvironment(msg *spoolMsg, tag, author, committer string) []string {
 
 	env := os.Environ()
 	env = append(env, fmt.Sprintf("SCORSH_REPO=%s", msg.Repo))

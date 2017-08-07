@@ -10,14 +10,14 @@ import (
 
 // Read a configuration from fname or die
 
-func readGlobalConfig(fname string) *SCORSHmaster {
+func readGlobalConfig(fname string) *master {
 
 	data, err := ioutil.ReadFile(fname)
 	if err != nil {
 		log.Fatal("Error while reading file: ", err)
 	}
 
-	var cfg = new(SCORSHmaster)
+	var cfg = new(master)
 
 	// Unmarshal the YAML configuration file into a SCORSHcfg structure
 	err = yaml.Unmarshal(data, cfg)
