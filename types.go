@@ -8,11 +8,11 @@ import (
 
 // error constants
 const (
-	SCORSH_ERR_NO_FILE = -(1 << iota)
-	SCORSH_ERR_KEYRING
-	SCORSH_ERR_NO_REPO
-	SCORSH_ERR_NO_COMMIT
-	SCORSH_ERR_SIGNATURE
+	errNoFile = -(1 << iota)
+	errKeyring
+	errNoRepo
+	errNoCommit
+	errSignature
 )
 
 // spoolMsg type represents messages received from the spool and
@@ -28,15 +28,15 @@ type spoolMsg struct {
 
 // An action represents a script of a  command configured on the server side
 type action struct {
-	URL  string `yaml:"c_url"`
-	Hash string `yaml:"c_hash"`
+	URL  string `yaml:"a_url"`
+	Hash string `yaml:"a_hash"`
 }
 
 // commandCfg represents a command configured on the server side
 type commandCfg struct {
 	Name     string   `yaml:"t_name"`
 	Keyrings []string `yaml:"t_keyrings"`
-	Commands []action `yaml:"t_commands"`
+	Actions  []action `yaml:"t_actions"`
 }
 
 // workerCfg represents the static configuration of a worker
@@ -44,11 +44,11 @@ type workerCfg struct {
 	Name    string   `yaml:"w_name"`
 	Repos   []string `yaml:"w_repos"`
 	Folder  string   `yaml:"w_folder"`
-	Logfile string   `yaml:"w_logfile"`
-	Tagfile string   `yaml:"w_tagfile"`
+	LogFile string   `yaml:"w_logfile"`
+	CfgFile string   `yaml:"w_cfgfile"`
 	//	Keyrings []string        `yaml:"w_keyrings"`
-	Tags    []commandCfg `yaml:"w_tags"`
-	TagKeys map[string]map[string]bool
+	Commands    []commandCfg `yaml:"w_commands"`
+	CommandKeys map[string]map[string]bool
 }
 
 // workerState represents the runtime state of a worker
@@ -67,7 +67,7 @@ type worker struct {
 // masterCfg represents the static configuration of the master
 type masterCfg struct {
 	Spooldir  string   `yaml:"s_spooldir"`
-	Logfile   string   `yaml:"s_logfile"`
+	LogFile   string   `yaml:"s_logfile"`
 	LogPrefix string   `yaml:"s_logprefix"`
 	Workers   []worker `yaml:"s_workers"`
 }
@@ -88,13 +88,13 @@ type master struct {
 
 // clientCmd is the type of commands sent by clients
 type clientCmd struct {
-	Tag  string   `yaml:"s_tag"`
+	Cmd  string   `yaml:"s_cmd"`
 	Args []string `yaml:"s_args"`
 }
 
 // clientMsg is the list of commands sent by a client
 type clientMsg struct {
-	Tags []clientCmd `yaml:"scorsh"`
+	Commands []clientCmd `yaml:"scorsh"`
 }
 
 ////////////////////////
@@ -104,7 +104,7 @@ func (cfg *master) String() string {
 	var buff bytes.Buffer
 
 	fmt.Fprintf(&buff, "spooldir: %s\n", cfg.Spooldir)
-	fmt.Fprintf(&buff, "logfile: %s\n", cfg.Logfile)
+	fmt.Fprintf(&buff, "logfile: %s\n", cfg.LogFile)
 	fmt.Fprintf(&buff, "logprefix: %s\n", cfg.LogPrefix)
 	fmt.Fprintf(&buff, "Workers: \n")
 
@@ -135,8 +135,8 @@ func (w *worker) String() string {
 	fmt.Fprintf(&buff, "Name: %s\n", w.Name)
 	fmt.Fprintf(&buff, "Repos: %s\n", w.Repos)
 	fmt.Fprintf(&buff, "Folder: %s\n", w.Folder)
-	fmt.Fprintf(&buff, "Logfile: %s\n", w.Logfile)
-	fmt.Fprintf(&buff, "Tagfile: %s\n", w.Tagfile)
+	fmt.Fprintf(&buff, "LogFile: %s\n", w.LogFile)
+	fmt.Fprintf(&buff, "CfgFile: %s\n", w.CfgFile)
 	//	fmt.Fprintf(&buff, "Keyrings: %s\n", w.Keyrings)
 
 	return buff.String()
@@ -146,10 +146,10 @@ func (msg *clientMsg) String() string {
 
 	var buff bytes.Buffer
 
-	for _, t := range msg.Tags {
+	for _, c := range msg.Commands {
 
-		fmt.Fprintf(&buff, "s_tag: %s\n", t.Tag)
-		for _, a := range t.Args {
+		fmt.Fprintf(&buff, "s_cmd: %s\n", c.Cmd)
+		for _, a := range c.Args {
 			fmt.Fprintf(&buff, "  s_args: %s\n", a)
 		}
 	}

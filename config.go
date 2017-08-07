@@ -27,10 +27,10 @@ func readGlobalConfig(fname string) *master {
 
 	//fmt.Printf("%s", cfg)
 
-	if cfg.Logfile != "" {
-		f, err := os.OpenFile(cfg.Logfile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0600)
+	if cfg.LogFile != "" {
+		f, err := os.OpenFile(cfg.LogFile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0600)
 		if err != nil {
-			log.Fatal("Error opening logfile: ", cfg.Logfile, err)
+			log.Fatal("Error opening logfile: ", cfg.LogFile, err)
 		} else {
 			log.SetOutput(io.Writer(f))
 		}

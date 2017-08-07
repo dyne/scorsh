@@ -29,15 +29,15 @@ func SCORSHerr(err int) error {
 	var errStr string
 
 	switch err {
-	case SCORSH_ERR_NO_FILE:
+	case errNoFile:
 		errStr = "Invalid file name"
-	case SCORSH_ERR_KEYRING:
+	case errKeyring:
 		errStr = "Invalid keyring"
-	case SCORSH_ERR_NO_REPO:
+	case errNoRepo:
 		errStr = "Invalid repository"
-	case SCORSH_ERR_NO_COMMIT:
+	case errNoCommit:
 		errStr = "Invalid commit ID"
-	case SCORSH_ERR_SIGNATURE:
+	case errSignature:
 		errStr = "Invalid signature"
 	default:
 		errStr = "Generic Error"

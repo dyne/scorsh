@@ -35,16 +35,16 @@ func (w *worker) Matches(repo, branch string) bool {
 func (w *worker) LoadKeyrings() error {
 
 	w.Keys = make(map[string]openpgp.KeyRing)
-	w.TagKeys = make(map[string]map[string]bool)
+	w.CommandKeys = make(map[string]map[string]bool)
 
-	for _, t := range w.Tags {
-		w.TagKeys[t.Name] = make(map[string]bool)
+	for _, c := range w.Commands {
+		w.CommandKeys[c.Name] = make(map[string]bool)
 
 		// Open the keyring files
-		for _, keyring := range t.Keyrings {
+		for _, keyring := range c.Keyrings {
 			if _, ok := w.Keys[keyring]; ok {
-				// keyring has been loaded: just add it to the TagKeys map
-				w.TagKeys[t.Name][keyring] = true
+				// keyring has been loaded: just add it to the CommandKeys map
+				w.CommandKeys[c.Name][keyring] = true
 				continue
 			}
 			kfile := fmt.Sprintf("%s/%s", w.Folder, keyring)
@@ -64,26 +64,25 @@ func (w *worker) LoadKeyrings() error {
 				//return fmt.Errorf("Unable to load keyring: ", err_key)
 			}
 			w.Keys[keyring] = kr
-			w.TagKeys[t.Name][keyring] = true
+			w.CommandKeys[c.Name][keyring] = true
 			_ = f.Close()
 		}
 	}
 	return nil
 }
 
-// LoadTags loads all the configured commands for the worker
-func (w *worker) LoadTags() error {
+// LoadCommands loads all the configured commands for the worker
+func (w *worker) LoadCommands() error {
 
-	wTags, err := ioutil.ReadFile(w.Tagfile)
+	wCmds, err := ioutil.ReadFile(w.CfgFile)
 	if err != nil {
 		return fmt.Errorf("Cannot read worker config: %s", err)
 	}
 
-	err = yaml.Unmarshal(wTags, w)
-	//err = yaml.Unmarshal(w_tags, tags)
+	err = yaml.Unmarshal(wCmds, w)
 
 	if err != nil {
-		return fmt.Errorf("Error while reading tags: %s", err)
+		return fmt.Errorf("Error while reading commands: %s", err)
 	}
 
 	return nil
@@ -132,14 +131,14 @@ func startWorkers(master *master) error {
 		worker.StatusChan = master.StatusChan
 		worker.MsgChan = make(chan spoolMsg, 10)
 
-		// Load worker tags from worker.Tagfile
-		err := worker.LoadTags()
+		// Load worker commands from worker.CfgFile
+		err := worker.LoadCommands()
 		if err != nil {
 			close(worker.MsgChan)
-			return fmt.Errorf("[Starting worker: %s] Unable to load tags: %s", worker.Name, err)
+			return fmt.Errorf("[Starting worker: %s] Unable to load commands: %s", worker.Name, err)
 		}
 
-		// Load worker keyrings -- this must be called *after* LoadTags!!!!
+		// Load worker keyrings -- this must be called *after* LoadCommands!!!!
 		err = worker.LoadKeyrings()
 		if err != nil {
 			close(worker.MsgChan)

@@ -96,10 +96,10 @@ func intersectKeys(ref map[string]bool, keys []string) []string {
 	return ret
 }
 
-func findTagConfig(tagName string, w *worker) (*commandCfg, bool) {
+func findCmdConfig(cmdName string, w *worker) (*commandCfg, bool) {
 
-	for _, c := range w.Tags {
-		if c.Name == tagName {
+	for _, c := range w.Commands {
+		if c.Name == cmdName {
 			return &c, true
 		}
 	}
@@ -123,7 +123,7 @@ func getCommitterEmail(c *git.Commit) string {
 // looking for scorsh commands, and tries to execute those if found
 func walkCommits(msg spoolMsg, w *worker) error {
 
-	var commands *clientMsg
+	var cmdMsg *clientMsg
 
 	debug.log("[worker: %s] Inside walkCommits\n", w.Name)
 
@@ -135,7 +135,7 @@ func walkCommits(msg spoolMsg, w *worker) error {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while opening repository %s (%s)\n",
 			reponame, err)
-		return SCORSHerr(SCORSH_ERR_NO_REPO)
+		return SCORSHerr(errNoRepo)
 	}
 
 	oldRevOid, _ := git.NewOid(oldRev)
@@ -143,7 +143,7 @@ func walkCommits(msg spoolMsg, w *worker) error {
 	oldrevCommit, err := repo.LookupCommit(oldRevOid)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Commit: %s does not exist\n", oldRev)
-		return SCORSHerr(SCORSH_ERR_NO_COMMIT)
+		return SCORSHerr(errNoCommit)
 	}
 
 	newRevOid, _ := git.NewOid(newRev)
@@ -151,7 +151,7 @@ func walkCommits(msg spoolMsg, w *worker) error {
 	newrevCommit, err := repo.LookupCommit(newRevOid)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Commit: %s does not exist\n", newRev)
-		return SCORSHerr(SCORSH_ERR_NO_COMMIT)
+		return SCORSHerr(errNoCommit)
 	}
 
 	curCommit := newrevCommit
@@ -167,39 +167,39 @@ func walkCommits(msg spoolMsg, w *worker) error {
 			// that specific scorsh-command
 
 			// Check if the commit contains a scorsh command
-			commands, err = findScorshMessage(commit)
+			cmdMsg, err = findScorshMessage(commit)
 			if err == nil {
 				//  the commit contains a valid scorsh message
 				// 1) get the list of all the keyrings which verify the message
 				validKeys := getValidKeys(commit, &(w.Keys))
 				debug.log("[worker: %s] validated keyrings on commit: %s\n", w.Name, validKeys)
 
-				// 2) then for each tag in the message
-				for _, t := range commands.Tags {
-					// a) check that the tag is among those accepted by the worker
-					tagCfg, goodTag := findTagConfig(t.Tag, w)
-					debug.log("[worker: %s] goodTag: %s\n", w.Name, goodTag)
+				// 2) then for each command in the message
+				for _, c := range cmdMsg.Commands {
+					// a) check that the command is among those accepted by the worker
+					cmdCfg, goodCmd := findCmdConfig(c.Cmd, w)
+					debug.log("[worker: %s] goodCmd: %s\n", w.Name, goodCmd)
 
-					if !goodTag {
-						debug.log("[worker: %s] unsupported tag: %s\n", w.Name, t.Tag)
+					if !goodCmd {
+						debug.log("[worker: %s] unsupported command: %s\n", w.Name, c.Cmd)
 						continue
 					}
 
-					// b) check that at least one of the accepted tag keyrings
+					// b) check that at least one of the accepted command keyrings
 					// is in valid_keys
-					goodKeys := intersectKeys(w.TagKeys[t.Tag], validKeys) != nil
+					goodKeys := intersectKeys(w.CommandKeys[c.Cmd], validKeys) != nil
 					debug.log("[worker: %s] goodKeys: %s\n", w.Name, goodKeys)
 
 					if !goodKeys {
-						debug.log("[worker: %s] no matching keys for tag: %s\n", w.Name, t.Tag)
+						debug.log("[worker: %s] no matching keys for command: %s\n", w.Name, c.Cmd)
 						continue
 					}
 
-					// c) If everything is OK, execute the tag
-					if goodTag && goodKeys {
-						env := setEnvironment(&msg, t.Tag, getAuthorEmail(commit), getCommitterEmail(commit))
-						errs := execTag(tagCfg, t.Args, env)
-						debug.log("[worker: %s] errors in tag %s: %s\n", w.Name, t.Tag, errs)
+					// c) If everything is OK, execute the command
+					if goodCmd && goodKeys {
+						env := setEnvironment(&msg, c.Cmd, getAuthorEmail(commit), getCommitterEmail(commit))
+						errs := execCommand(cmdCfg, c.Args, env)
+						debug.log("[worker: %s] errors in command %s: %s\n", w.Name, c.Cmd, errs)
 					}
 				}
 			} else {
@@ -209,7 +209,7 @@ func walkCommits(msg spoolMsg, w *worker) error {
 			curCommit = commit.Parent(0)
 		} else {
 			fmt.Printf("Commit %x not found!\n", curCommit.Id())
-			return SCORSHerr(SCORSH_ERR_NO_COMMIT)
+			return SCORSHerr(errNoCommit)
 		}
 	}
 	return nil

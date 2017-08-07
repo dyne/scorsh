@@ -55,34 +55,34 @@ func execURL(cmdURL *url.URL, args, env []string) error {
 	return nil
 }
 
-func execTag(tag *commandCfg, args []string, env []string) []error {
+func execCommand(cmd *commandCfg, args []string, env []string) []error {
 
 	var ret []error
 
-	for _, c := range tag.Commands {
-		debug.log("[tag: %s] attempting command: %s\n", tag.Name, c.URL)
-		cmdURL, err := url.Parse(c.URL)
+	for _, a := range cmd.Actions {
+		debug.log("[command: %s] attempting action: %s\n", cmd.Name, a.URL)
+		actionURL, err := url.Parse(a.URL)
 		if err != nil {
-			log.Printf("[tag: %s] error parsing URL: %s", tag.Name, err)
+			log.Printf("[command: %s] error parsing URL: %s", cmd.Name, err)
 		} else {
-			if cmdURL.Scheme == "file" {
+			if actionURL.Scheme == "file" {
 				err = nil
 				// if a hash is specified, check that it matches
-				if c.Hash != "" {
-					err = checkHash(cmdURL.Path, c.Hash)
+				if a.Hash != "" {
+					err = checkHash(actionURL.Path, a.Hash)
 				}
 				// if the hash does not match, abort the command
 				if err != nil {
-					log.Printf("[tag: %s] %s -- aborting command\n", tag.Name, err)
+					log.Printf("[command: %s] %s -- aborting action\n", cmd.Name, err)
 					ret = append(ret, err)
 					continue
 				} else {
 					// finally, the command can be executed
-					err = execLocalFile(cmdURL, args, env)
+					err = execLocalFile(actionURL, args, env)
 				}
 
-			} else if cmdURL.Scheme == "http" || cmdURL.Scheme == "https" {
-				err = execURL(cmdURL, args, env)
+			} else if actionURL.Scheme == "http" || actionURL.Scheme == "https" {
+				err = execURL(actionURL, args, env)
 			}
 		}
 		ret = append(ret, err)
@@ -90,7 +90,7 @@ func execTag(tag *commandCfg, args []string, env []string) []error {
 	return ret
 }
 
-func setEnvironment(msg *spoolMsg, tag, author, committer string) []string {
+func setEnvironment(msg *spoolMsg, cmd, author, committer string) []string {
 
 	env := os.Environ()
 	env = append(env, fmt.Sprintf("SCORSH_REPO=%s", msg.Repo))
@@ -98,7 +98,7 @@ func setEnvironment(msg *spoolMsg, tag, author, committer string) []string {
 	env = append(env, fmt.Sprintf("SCORSH_OLDREV=%s", msg.OldRev))
 	env = append(env, fmt.Sprintf("SCORSH_NEWREV=%s", msg.NewRev))
 	env = append(env, fmt.Sprintf("SCORSH_ID=%s", msg.ID))
-	env = append(env, fmt.Sprintf("SCORSH_TAG=%s", tag))
+	env = append(env, fmt.Sprintf("SCORSH_COMMAND=%s", cmd))
 	env = append(env, fmt.Sprintf("SCORSH_AUTHOR=%s", author))
 	env = append(env, fmt.Sprintf("SCORSH_COMMITTER=%s", committer))
 

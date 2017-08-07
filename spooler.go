@@ -18,7 +18,7 @@ func parseRequest(fname string, msg *spoolMsg) error {
 	data, err := ioutil.ReadFile(fname)
 	if err != nil {
 		log.Printf("Unable to open file: %s\n", fname)
-		return SCORSHerr(SCORSH_ERR_NO_FILE)
+		return SCORSHerr(errNoFile)
 	}
 
 	debug.log("[parseRequest] file contains: \n%s\n", data)
