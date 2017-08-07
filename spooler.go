@@ -11,7 +11,7 @@ import (
 )
 
 // parse a request file and return a SCORSHmessage
-func parseRequest(fname string, msg *SCORSHmsg) error {
+func parseRequest(fname string, msg *spoolMsg) error {
 
 	debug.log("[parseRequest] message at start: %s\n", msg)
 
@@ -33,7 +33,7 @@ func parseRequest(fname string, msg *SCORSHmsg) error {
 	return nil
 }
 
-func spooler(watcher *fsnotify.Watcher, master chan SCORSHmsg) {
+func spooler(watcher *fsnotify.Watcher, master chan spoolMsg) {
 
 	log.Println("Spooler started correctly")
 
@@ -44,7 +44,7 @@ func spooler(watcher *fsnotify.Watcher, master chan SCORSHmsg) {
 			// "Write" event, which should happen only when the file is
 			// created
 			if event.Op == fsnotify.Write {
-				var msg SCORSHmsg
+				var msg spoolMsg
 				debug.log("[spooler] new file %s detected\n", event.Name)
 				err := parseRequest(event.Name, &msg)
 				if err != nil {
@@ -71,7 +71,7 @@ func spooler(watcher *fsnotify.Watcher, master chan SCORSHmsg) {
 	}
 }
 
-func startSpooler(master *SCORSHmaster) error {
+func startSpooler(master *master) error {
 
 	watcher, err := fsnotify.NewWatcher()
 

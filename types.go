@@ -15,9 +15,9 @@ const (
 	SCORSH_ERR_SIGNATURE
 )
 
-// SCORSHmsg type represents messages received from the spool and
+// spoolMsg type represents messages received from the spool and
 // sent to workers
-type SCORSHmsg struct {
+type spoolMsg struct {
 	ID     string `yaml:"m_id"`
 	Repo   string `yaml:"m_repo"`
 	Branch string `yaml:"m_branch"`
@@ -26,80 +26,80 @@ type SCORSHmsg struct {
 	Path   string
 }
 
-// SCORSHcmd represents commands configured on the server side
-type SCORSHcmd struct {
+// An action represents a script of a  command configured on the server side
+type action struct {
 	URL  string `yaml:"c_url"`
 	Hash string `yaml:"c_hash"`
 }
 
-// SCORSHtagCfg represents tags configured on the server side
-type SCORSHtagCfg struct {
-	Name     string      `yaml:"t_name"`
-	Keyrings []string    `yaml:"t_keyrings"`
-	Commands []SCORSHcmd `yaml:"t_commands"`
+// commandCfg represents a command configured on the server side
+type commandCfg struct {
+	Name     string   `yaml:"t_name"`
+	Keyrings []string `yaml:"t_keyrings"`
+	Commands []action `yaml:"t_commands"`
 }
 
-// SCORSHworkerCfg represents the static configuration of a worker
-type SCORSHworkerCfg struct {
+// workerCfg represents the static configuration of a worker
+type workerCfg struct {
 	Name    string   `yaml:"w_name"`
 	Repos   []string `yaml:"w_repos"`
 	Folder  string   `yaml:"w_folder"`
 	Logfile string   `yaml:"w_logfile"`
 	Tagfile string   `yaml:"w_tagfile"`
 	//	Keyrings []string        `yaml:"w_keyrings"`
-	Tags    []SCORSHtagCfg `yaml:"w_tags"`
+	Tags    []commandCfg `yaml:"w_tags"`
 	TagKeys map[string]map[string]bool
 }
 
-// SCORSHworkerState represents the runtime state of a worker
-type SCORSHworkerState struct {
+// workerState represents the runtime state of a worker
+type workerState struct {
 	Keys       map[string]openpgp.KeyRing
-	MsgChan    chan SCORSHmsg
-	StatusChan chan SCORSHmsg
+	MsgChan    chan spoolMsg
+	StatusChan chan spoolMsg
 }
 
-// SCORSHworker represents the configuration and state of a worker
-type SCORSHworker struct {
-	SCORSHworkerCfg `yaml:",inline"`
-	SCORSHworkerState
+// worker represents the configuration and state of a worker
+type worker struct {
+	workerCfg `yaml:",inline"`
+	workerState
 }
 
-// SCORSHmasterCfg represents the static configuration of the master
-type SCORSHmasterCfg struct {
-	Spooldir  string         `yaml:"s_spooldir"`
-	Logfile   string         `yaml:"s_logfile"`
-	LogPrefix string         `yaml:"s_logprefix"`
-	Workers   []SCORSHworker `yaml:"s_workers"`
+// masterCfg represents the static configuration of the master
+type masterCfg struct {
+	Spooldir  string   `yaml:"s_spooldir"`
+	Logfile   string   `yaml:"s_logfile"`
+	LogPrefix string   `yaml:"s_logprefix"`
+	Workers   []worker `yaml:"s_workers"`
 }
 
-// SCORSHmasterState represents the runtime state of the master
-type SCORSHmasterState struct {
-	Spooler    chan SCORSHmsg
-	StatusChan chan SCORSHmsg
-	Repos      map[string][]*SCORSHworker
+// masterState represents the runtime state of the master
+type masterState struct {
+	Spooler    chan spoolMsg
+	StatusChan chan spoolMsg
+	Repos      map[string][]*worker
 	WorkingMsg map[string]int
 }
 
-// SCORSHmaster represents the configuration and state of the master
-type SCORSHmaster struct {
-	SCORSHmasterCfg `yaml:",inline"`
-	SCORSHmasterState
+// master represents the configuration and state of the master
+type master struct {
+	masterCfg `yaml:",inline"`
+	masterState
 }
 
-// SCORSHtag is the type of commands sent by clients
-type SCORSHtag struct {
+// clientCmd is the type of commands sent by clients
+type clientCmd struct {
 	Tag  string   `yaml:"s_tag"`
 	Args []string `yaml:"s_args"`
 }
 
-// SCORSHclientMsg is the list of commands sent by a client
-type SCORSHclientMsg struct {
-	Tags []SCORSHtag `yaml:"scorsh"`
+// clientMsg is the list of commands sent by a client
+type clientMsg struct {
+	Tags []clientCmd `yaml:"scorsh"`
 }
 
 ////////////////////////
 
-func (cfg *SCORSHmaster) String() string {
+func (cfg *master) String() string {
 
 	var buff bytes.Buffer
 
@@ -115,7 +115,7 @@ func (cfg *SCORSHmaster) String() string {
 	return buff.String()
 }
 
-func (msg *SCORSHmsg) String() string {
+func (msg *spoolMsg) String() string {
 
 	var buff bytes.Buffer
 	fmt.Fprintf(&buff, "Id: %s\n", msg.ID)
@@ -129,7 +129,7 @@ func (msg *SCORSHmsg) String() string {
 
 }
 
-func (w *SCORSHworker) String() string {
+func (w *worker) String() string {
 
 	var buff bytes.Buffer
 	fmt.Fprintf(&buff, "Name: %s\n", w.Name)
@@ -142,7 +142,7 @@ func (w *SCORSHworker) String() string {
 	return buff.String()
 }
 
-func (msg *SCORSHclientMsg) String() string {
+func (msg *clientMsg) String() string {
 
 	var buff bytes.Buffer
 

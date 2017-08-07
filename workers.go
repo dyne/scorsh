@@ -13,7 +13,7 @@ import (
 
 // Matches returns true if the configured repo:branch of the worker
 // matches the repo and branch provided as arguments
-func (w *SCORSHworker) Matches(repo, branch string) bool {
+func (w *worker) Matches(repo, branch string) bool {
 
 	for _, r := range w.Repos {
 		parts := strings.SplitN(r, ":", 2)
@@ -32,7 +32,7 @@ func (w *SCORSHworker) Matches(repo, branch string) bool {
 
 // LoadKeyrings loads the configured keyrings for all the commands
 // managed by the worker
-func (w *SCORSHworker) LoadKeyrings() error {
+func (w *worker) LoadKeyrings() error {
 
 	w.Keys = make(map[string]openpgp.KeyRing)
 	w.TagKeys = make(map[string]map[string]bool)
@@ -72,7 +72,7 @@ func (w *SCORSHworker) LoadKeyrings() error {
 }
 
 // LoadTags loads all the configured commands for the worker
-func (w *SCORSHworker) LoadTags() error {
+func (w *worker) LoadTags() error {
 
 	wTags, err := ioutil.ReadFile(w.Tagfile)
 	if err != nil {
@@ -90,9 +90,9 @@ func (w *SCORSHworker) LoadTags() error {
 }
 
 //
-func runWorker(w *SCORSHworker) {
+func runWorker(w *worker) {
 
-	var msg SCORSHmsg
+	var msg spoolMsg
 
 	log.Printf("[worker: %s] Started\n", w.Name)
 
@@ -116,8 +116,8 @@ func runWorker(w *SCORSHworker) {
 }
 
 // StartWorkers starts all the workers specified in a given
-// configuration and fills in the SCORSHmaster struct
-func startWorkers(master *SCORSHmaster) error {
+// configuration and fills in the master struct
+func startWorkers(master *master) error {
 
 	numWorkers := len(master.Workers)
 
@@ -130,7 +130,7 @@ func startWorkers(master *SCORSHmaster) error {
 		worker := &(master.Workers[w])
 		// Set the Status and Msg channels
 		worker.StatusChan = master.StatusChan
-		worker.MsgChan = make(chan SCORSHmsg, 10)
+		worker.MsgChan = make(chan spoolMsg, 10)
 
 		// Load worker tags from worker.Tagfile
 		err := worker.LoadTags()
