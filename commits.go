@@ -225,6 +225,7 @@ func walkCommits(msg spoolMsg, w *worker) error {
 
 	}
 
+	// Now we can execute the commands in the stack, in the correct order...
 	stackHead := len(cmdStack) - 1
 	debug.log("[worker: %s] Executing command stack:\n", w.Name)
 	for i := range cmdStack {
