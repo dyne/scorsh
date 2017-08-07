@@ -7,7 +7,7 @@
 ## func
 build_command(){
 
-    TAG=$1
+    CMD=$1
     shift
     ARGS=$@
 
@@ -22,7 +22,7 @@ build_command(){
 scorsh:
   [ 
     {
-     s_tag: "$TAG",
+     s_cmd: "$CMD",
      s_args: [${ARGLIST}]
     }
   ]
@@ -34,7 +34,7 @@ EOF
 
 
 if [ $# -le 0 ]; then
-    echo "Usage: $0 <tag> [<arg>...]" 
+    echo "Usage: $0 <cmd> [<arg>...]" 
     exit 1
 fi
 

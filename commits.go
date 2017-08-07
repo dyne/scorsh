@@ -176,7 +176,12 @@ func walkCommits(msg spoolMsg, w *worker) error {
 
 				// 2) then for each command in the message
 				for _, c := range cmdMsg.Commands {
+					if c.Cmd == "" {
+						log.Printf("[worker: %s] empty command\n", w.Name)
+						continue
+					}
 					// a) check that the command is among those accepted by the worker
+					debug.log("[worker: %s] validating command: %s\n", w.Name, c.Cmd)
 					cmdCfg, goodCmd := findCmdConfig(c.Cmd, w)
 					debug.log("[worker: %s] goodCmd: %s\n", w.Name, goodCmd)
 

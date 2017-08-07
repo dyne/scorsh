@@ -34,9 +34,9 @@ type action struct {
 
 // commandCfg represents a command configured on the server side
 type commandCfg struct {
-	Name     string   `yaml:"t_name"`
-	Keyrings []string `yaml:"t_keyrings"`
-	Actions  []action `yaml:"t_actions"`
+	Name     string   `yaml:"c_name"`
+	Keyrings []string `yaml:"c_keyrings"`
+	Actions  []action `yaml:"c_actions"`
 }
 
 // workerCfg represents the static configuration of a worker
