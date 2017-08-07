@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/url"
-	"os"
 	"os/exec"
 )
 
@@ -55,7 +54,7 @@ func execURL(cmdURL *url.URL, args, env []string) error {
 	return nil
 }
 
-func execCommand(cmd *commandCfg, args []string, env []string) []error {
+func (cmd *command) exec() []error {
 
 	var ret []error
 
@@ -78,29 +77,14 @@ func execCommand(cmd *commandCfg, args []string, env []string) []error {
 					continue
 				} else {
 					// finally, the command can be executed
-					err = execLocalFile(actionURL, args, env)
+					err = execLocalFile(actionURL, cmd.Args, cmd.Env)
 				}
 
 			} else if actionURL.Scheme == "http" || actionURL.Scheme == "https" {
-				err = execURL(actionURL, args, env)
+				err = execURL(actionURL, cmd.Args, cmd.Env)
 			}
 		}
 		ret = append(ret, err)
 	}
 	return ret
-}
-
-func setEnvironment(msg *spoolMsg, cmd, author, committer string) []string {
-
-	env := os.Environ()
-	env = append(env, fmt.Sprintf("SCORSH_REPO=%s", msg.Repo))
-	env = append(env, fmt.Sprintf("SCORSH_BRANCH=%s", msg.Branch))
-	env = append(env, fmt.Sprintf("SCORSH_OLDREV=%s", msg.OldRev))
-	env = append(env, fmt.Sprintf("SCORSH_NEWREV=%s", msg.NewRev))
-	env = append(env, fmt.Sprintf("SCORSH_ID=%s", msg.ID))
-	env = append(env, fmt.Sprintf("SCORSH_COMMAND=%s", cmd))
-	env = append(env, fmt.Sprintf("SCORSH_AUTHOR=%s", author))
-	env = append(env, fmt.Sprintf("SCORSH_COMMITTER=%s", committer))
-
-	return env
 }

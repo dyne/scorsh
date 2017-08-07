@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"golang.org/x/crypto/openpgp"
+	"os"
 )
 
 // error constants
@@ -37,6 +38,16 @@ type commandCfg struct {
 	Name     string   `yaml:"c_name"`
 	Keyrings []string `yaml:"c_keyrings"`
 	Actions  []action `yaml:"c_actions"`
+}
+
+type commandState struct {
+	Env  []string
+	Args []string
+}
+
+type command struct {
+	commandCfg
+	commandState
 }
 
 // workerCfg represents the static configuration of a worker
@@ -156,4 +167,31 @@ func (msg *clientMsg) String() string {
 
 	return buff.String()
 
+}
+
+func (cmd *command) setEnvironment(msg *spoolMsg, commitID, author, committer string) {
+
+	env := os.Environ()
+	env = append(env, fmt.Sprintf("SCORSH_REPO=%s", msg.Repo))
+	env = append(env, fmt.Sprintf("SCORSH_BRANCH=%s", msg.Branch))
+	env = append(env, fmt.Sprintf("SCORSH_OLDREV=%s", msg.OldRev))
+	env = append(env, fmt.Sprintf("SCORSH_NEWREV=%s", msg.NewRev))
+	env = append(env, fmt.Sprintf("SCORSH_ID=%s", msg.ID))
+	env = append(env, fmt.Sprintf("SCORSH_COMMIT=%s", commitID))
+	env = append(env, fmt.Sprintf("SCORSH_COMMAND=%s", cmd.Name))
+	env = append(env, fmt.Sprintf("SCORSH_AUTHOR=%s", author))
+	env = append(env, fmt.Sprintf("SCORSH_COMMITTER=%s", committer))
+	cmd.Env = env
+}
+
+func (cmd *command) String() string {
+
+	var buff bytes.Buffer
+
+	fmt.Fprintf(&buff, "Name: %s\n", cmd.Name)
+	fmt.Fprintf(&buff, "Keyrings: %s\n", cmd.Keyrings)
+	fmt.Fprintf(&buff, "Actions: %s\n", cmd.Actions)
+	fmt.Fprintf(&buff, "Env: %s\n", cmd.Env)
+	fmt.Fprintf(&buff, "Args: %s\n", cmd.Args)
+	return buff.String()
 }

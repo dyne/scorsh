@@ -96,14 +96,16 @@ func intersectKeys(ref map[string]bool, keys []string) []string {
 	return ret
 }
 
-func findCmdConfig(cmdName string, w *worker) (*commandCfg, bool) {
+func findCmdConfig(cmdName string, w *worker) (commandCfg, bool) {
+
+	var cmdNull commandCfg
 
 	for _, c := range w.Commands {
 		if c.Name == cmdName {
-			return &c, true
+			return c, true
 		}
 	}
-	return nil, false
+	return cmdNull, false
 }
 
 func getAuthorEmail(c *git.Commit) string {
@@ -124,6 +126,7 @@ func getCommitterEmail(c *git.Commit) string {
 func walkCommits(msg spoolMsg, w *worker) error {
 
 	var cmdMsg *clientMsg
+	var cmdStack = make([]command, 0)
 
 	debug.log("[worker: %s] Inside walkCommits\n", w.Name)
 
@@ -166,23 +169,26 @@ func walkCommits(msg spoolMsg, w *worker) error {
 			// if it can be verified by any of the keyrings associated with
 			// that specific scorsh-command
 
-			// Check if the commit contains a scorsh command
+			// Check if the commit contains a scorsh message
 			cmdMsg, err = findScorshMessage(commit)
 			if err == nil {
 				//  the commit contains a valid scorsh message
-				// 1) get the list of all the keyrings which verify the message
+				// 1) get the list of all the keyrings which verify the message signature
 				validKeys := getValidKeys(commit, &(w.Keys))
 				debug.log("[worker: %s] validated keyrings on commit: %s\n", w.Name, validKeys)
 
 				// 2) then for each command in the message
 				for _, c := range cmdMsg.Commands {
 					if c.Cmd == "" {
+						// The command is empty -- ignore, log, and continue
 						log.Printf("[worker: %s] empty command\n", w.Name)
 						continue
 					}
 					// a) check that the command is among those accepted by the worker
 					debug.log("[worker: %s] validating command: %s\n", w.Name, c.Cmd)
-					cmdCfg, goodCmd := findCmdConfig(c.Cmd, w)
+					var cmd = new(command)
+					var goodCmd, goodKeys bool
+					cmd.commandCfg, goodCmd = findCmdConfig(c.Cmd, w)
 					debug.log("[worker: %s] goodCmd: %s\n", w.Name, goodCmd)
 
 					if !goodCmd {
@@ -192,7 +198,7 @@ func walkCommits(msg spoolMsg, w *worker) error {
 
 					// b) check that at least one of the accepted command keyrings
 					// is in valid_keys
-					goodKeys := intersectKeys(w.CommandKeys[c.Cmd], validKeys) != nil
+					goodKeys = intersectKeys(w.CommandKeys[c.Cmd], validKeys) != nil
 					debug.log("[worker: %s] goodKeys: %s\n", w.Name, goodKeys)
 
 					if !goodKeys {
@@ -200,11 +206,11 @@ func walkCommits(msg spoolMsg, w *worker) error {
 						continue
 					}
 
-					// c) If everything is OK, execute the command
+					// c) If everything is OK, push the command to the stack
 					if goodCmd && goodKeys {
-						env := setEnvironment(&msg, c.Cmd, getAuthorEmail(commit), getCommitterEmail(commit))
-						errs := execCommand(cmdCfg, c.Args, env)
-						debug.log("[worker: %s] errors in command %s: %s\n", w.Name, c.Cmd, errs)
+						cmd.setEnvironment(&msg, curCommit.Id().String(), getAuthorEmail(commit), getCommitterEmail(commit))
+						cmd.Args = c.Args
+						cmdStack = append(cmdStack, *cmd)
 					}
 				}
 			} else {
@@ -216,6 +222,18 @@ func walkCommits(msg spoolMsg, w *worker) error {
 			fmt.Printf("Commit %x not found!\n", curCommit.Id())
 			return SCORSHerr(errNoCommit)
 		}
+
 	}
+
+	stackHead := len(cmdStack) - 1
+	debug.log("[worker: %s] Executing command stack:\n", w.Name)
+	for i := range cmdStack {
+		//debug.log("[stack elem: %d] %s\n", i, cmdStack[stackHead-i].String())
+		// now we execute the command that emerges from the stack
+		cmd := cmdStack[stackHead-i]
+		errs := cmd.exec()
+		debug.log("[worker: %s] errors in command %s: %s\n", w.Name, cmd.Name, errs)
+	}
+
 	return nil
 }
