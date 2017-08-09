@@ -1,0 +1,57 @@
+#!/bin/sh
+
+####
+##
+## testsuite for SCORSH
+##
+
+if [ $# -lt 1 ]; then
+    echo "Usage: $0 <spec_file>"
+    exit 1
+fi
+
+. ./scorsh_functions
+
+[ -f "$1" ] || ( echo "Unable to open file $1" && exit 2 )
+
+. "$1"
+
+
+trap cleanup 0 HUP INT TRAP TERM QUIT
+
+## func
+cleanup(){
+    ## do stuff here
+    rm -rf ${SCORSH_REPO}
+    rm -rf ${SCORSH_APP}
+    rm -rf ${REMOTE_REPO}
+    rm -rf ${LOCAL_REPO}
+    
+    echo "Exiting..."
+}
+
+## func
+run_tests(){
+
+    for t in $TESTS; do
+        export PASSED_TESTS FAILED_TESTS TOT_TESTS
+        echo "\033[4;7;36m-+-+- running tests in $t -+-+-\033[0m"
+        $t
+        eval $(cat ${STATUS_FILE})
+        echo "\033[35m-------------------------------------------------------------\033[0m"
+        
+    done
+    export PASSED_TESTS FAILED_TESTS TOT_TESTS
+}
+
+
+## main
+
+export SCORSH_URL SCORSH_REPO SCORSH_APP REMOTE_REPO LOCAL_REPO
+PASSED_TESTS=0
+FAILED_TESTS=0
+TOT_TESTS=0
+
+run_tests
+
+report_results

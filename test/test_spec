@@ -1,0 +1,27 @@
+##
+## Definition of constants to be used by the testbed
+##
+
+## SCORSH_URL: URL of the git repo for scorsh
+SCORSH_URL="http://github.com/dyne/scorsh"
+
+## SCORSH_REPO: folder where the scorsh repo will be cloned
+SCORSH_REPO=$(realpath "./scorsh/")
+
+## SCORSH_APP: path where the scorsh app will be installed
+SCORSH_APP=$(realpath "./scorsh_app/")
+
+## REMOTE_REPO: path of the folder where the "remote" repo will be
+## created
+REMOTE_REPO=$(realpath "./testbed_remote.git")
+
+## LOCAL_REPO: folder where REMOTE_REPO will be cloned
+LOCAL_REPO=$(realpath "./testbed_repo")
+
+
+TESTS="\
+./create_testbed.sh \
+./destroy_testbed.sh \
+"
+
+##./destroy_testbed.sh \

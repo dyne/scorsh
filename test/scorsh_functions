@@ -1,0 +1,56 @@
+#!/bin/sh
+
+STATUS_FILE=./.exit_status
+
+## func
+failed(){
+    
+    TEST_NAME="$1"
+    TEST_SECTION="$2"
+
+    echo "[\033[31mFAILED\033[0m] -- ${TEST_NAME}:${TEST_SECTION} "
+    FAILED_TESTS=$((${FAILED_TESTS} + 1))
+}
+
+## func
+passed(){
+
+    TEST_NAME="$1"
+    TEST_SECTION="$2"
+    
+    echo "[\033[32mPASSED\033[0m] -- ${TEST_NAME}:${TEST_SECTION} "
+    PASSED_TESTS=$((${PASSED_TESTS} + 1))
+}
+
+
+## func
+check(){
+
+    EXPR="$1"
+    TEST_NAME="$2"
+    TEST_SECTION="$3"
+
+    TOT_TESTS=$((${TOT_TESTS} + 1))
+    
+    ##echo "EXPR: ${EXPR}"
+    if  $(echo ${EXPR}) ; then 
+        passed ${TEST_NAME} ${TEST_SECTION}
+    else
+        failed ${TEST_NAME} ${TEST_SECTION}
+    fi
+}
+
+## func
+report_results(){
+    
+    echo -n "TOTAL_TESTS: ${TOT_TESTS} -- "
+    echo -n "\033[32mPASSED: ${PASSED_TESTS}\033[0m -- "
+    echo "\033[31mFAILED: ${FAILED_TESTS}\033[0m "
+}
+
+# func
+return_results(){
+    echo "TOT_TESTS=${TOT_TESTS};PASSED_TESTS=${PASSED_TESTS};FAILED_TESTS=${FAILED_TESTS};">${STATUS_FILE}
+}
+
+
