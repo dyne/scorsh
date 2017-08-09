@@ -41,6 +41,25 @@ check(){
 }
 
 ## func
+check_fatal(){
+    EXPR="$1"
+    TEST_NAME="$2"
+    TEST_SECTION="$3"
+
+    TOT_TESTS=$((${TOT_TESTS} + 1))
+    
+    ##echo "EXPR: ${EXPR}"
+    if  $(echo ${EXPR}) ; then 
+        passed ${TEST_NAME} ${TEST_SECTION}
+    else
+        failed ${TEST_NAME} ${TEST_SECTION}
+        echo "Fatal test failed -- Aborting"
+        exit 1
+    fi
+}
+
+
+## func
 report_results(){
     
     echo -n "TOTAL_TESTS: ${TOT_TESTS} -- "

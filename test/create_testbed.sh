@@ -46,16 +46,4 @@ mkdir ${SCORSH_APP}
 check "[ $? -eq 0 ]" $0 "create_scorsh_app_folder"
 
 
-### create spool directory
-mkdir "${SCORSH_APP}/spool"
-check "[ -$? -eq 0 ]" $0 "create_spool_folder"
-
-
-### configure the remote to be used with scorsh
-cd ${REMOTE_REPO}
-git config -f scorsh scorsh.spooldir $(realpath "${SCORSH_APP}/spool")
-check "[ $? -eq 0 ]" $0 "config_remote_repo"
-cd -
-
-
 return_results
