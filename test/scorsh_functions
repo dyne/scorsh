@@ -13,6 +13,17 @@ failed(){
 }
 
 ## func
+fatal(){
+    
+    TEST_NAME="$1"
+    TEST_SECTION="$2"
+
+    echo "[\033[7;31mFATAL\033[0m] -- ${TEST_NAME}:${TEST_SECTION} "
+    FAILED_TESTS=$((${FAILED_TESTS} + 1))
+}
+
+
+## func
 passed(){
 
     TEST_NAME="$1"
@@ -52,7 +63,7 @@ check_fatal(){
     if  $(echo ${EXPR}) ; then 
         passed ${TEST_NAME} ${TEST_SECTION}
     else
-        failed ${TEST_NAME} ${TEST_SECTION}
+        fatal ${TEST_NAME} ${TEST_SECTION}
         echo "Fatal test failed -- Aborting"
         exit 1
     fi

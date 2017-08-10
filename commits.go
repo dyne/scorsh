@@ -146,7 +146,7 @@ func walkCommits(msg spoolMsg, w *worker) error {
 	oldrevCommit, err := repo.LookupCommit(oldRevOid)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Commit: %s does not exist\n", oldRev)
-		return SCORSHerr(errNoCommit)
+		return fmt.Errorf("%s: %s", SCORSHerr(errNoCommit), oldRev)
 	}
 
 	newRevOid, _ := git.NewOid(newRev)
@@ -154,7 +154,7 @@ func walkCommits(msg spoolMsg, w *worker) error {
 	newrevCommit, err := repo.LookupCommit(newRevOid)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Commit: %s does not exist\n", newRev)
-		return SCORSHerr(errNoCommit)
+		return fmt.Errorf("%s: %s", SCORSHerr(errNoCommit), newRev)
 	}
 
 	curCommit := newrevCommit

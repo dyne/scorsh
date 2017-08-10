@@ -106,7 +106,7 @@ func runWorker(w *worker) {
 			// process message
 			err := walkCommits(msg, w)
 			if err != nil {
-				log.Printf("[worker: %s] error in walk_commits: %s", err)
+				log.Printf("[worker: %s] error in walk_commits: %s", w.Name, err)
 			}
 			w.StatusChan <- msg
 			debug.log("[worker: %s] Sent message back: %s", w.Name, msg)

@@ -20,11 +20,12 @@ LOCAL_REPO=$(realpath "./testbed_repo")
 
 
 TESTS="\
-./create_testbed.sh  \
-./configure_app.sh   \
-./start_scorsh.sh    \
-./stop_scorsh.sh     \
-./destroy_testbed.sh \
+./create_testbed.sh       \
+./configure_app.sh        \
+./start_scorsh.sh         \
+./create_empty_commits.sh \
+./stop_scorsh.sh          \
+./destroy_testbed.sh      \
 "
 
 ##./destroy_testbed.sh \
