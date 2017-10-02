@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/libgit2/git2go"
+	"github.com/dyne/git2go.v26"
 	"golang.org/x/crypto/openpgp"
 	"gopkg.in/yaml.v2"
 	"log"
