@@ -1,15 +1,14 @@
 # scorsh
 
-Signed-Commit Remote Shell
+**Signed-Commit Remote Shell**
 
 
-**scorsh** lets you trigger commands on a remote git server through
-signed git commits.
+**scorsh** lets you trigger commands on a remote **git** server through commits, optionally signed with **gnupg**.
 
 **scorsh** is written in Go. 
 
 
-## WTF
+## Why scorsh
 
 ...if you have ever felt that git hooks fall too short to your standards...
 
@@ -22,8 +21,8 @@ _something_...
 ...then **scorsh** might be what you have been looking for. 
 
 **scorsh** is a simple system to execute commands on a remote host by
-using GPG-signed commits containing customisable commands
-(scorsh-tags). **scorsh** consists of three components:
+using git commits containing customisable commands
+(scorsh-tags) that can be authenticated using a gnupg signature . **scorsh** consists of three components:
 
 * the `scorsh-commit` executable (client-side)
 
@@ -62,7 +61,7 @@ possible types:
 ## Build notes
 
 **scorsh** depends on the availability of a native build of `libgit2`
-version `0.25` or greater on the native system where ***scorsh** is
+version `0.26` or greater on the native system where ***scorsh** is
 built. This dependencies is easily satisfied on various operating
 systems by using their respective package manager. For instance in
 Devuan ASCII one can simply do:
@@ -71,20 +70,11 @@ Devuan ASCII one can simply do:
 sudo apt install libgit2-dev
 ```
 
-In Devuan Jessie unfortunately `libgit2` is older than `0.25` so one
-should first build `git2go` from its repository, in which `libgit2` is a
-submodule to be built from scratch.
-
-```
-git clone https://github.com/libgit2/git2go
-cd git2go
-git submodule init
-git submodule update
-cd libgit2
-cmake .
-make
-sudo make install
-```
+In most distributions unfortunately `libgit2` is older than `0.26` so
+one should first build this exact release version from source,
+available
+here:
+[https://github.com/libgit2/libgit2/releases/tag/v0.26.0](libgit2 release 0.26)
 
 Then proceed installing dependencies for **scorsh**:
 ```
