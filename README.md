@@ -1,7 +1,7 @@
-# scorsh
 
-**Signed-Commit Remote Shell**
+# Signed-Commit Remote Shell
 
+![scorsh logo](https://github.com/dyne/scorsh/blob/master/doc/scorsh-logo-600px.png)
 
 **scorsh** lets you trigger commands on a remote **git** server through commits, optionally signed with **gnupg**.
 
